@@ -25,7 +25,6 @@ public class Simulation {
      * Saves the current state of the simulation to a file.
      * Save in csv format
      * Headers --> N: particlesCount
-     *         --> t: instantForSnapshot
      * time;positionX;positionY;velocityX;velocityY
      */
 
