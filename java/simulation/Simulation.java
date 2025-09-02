@@ -55,6 +55,14 @@ public class Simulation {
         return 0;
     }
 
+    private double calculateArea(String filepath){
+        return 0;
+    }
+    
+    private double calculatePressure(String filepath){
+        return 0;
+    }
+    
     public void runSimulation() {
         // Simulation logic goes here
 
