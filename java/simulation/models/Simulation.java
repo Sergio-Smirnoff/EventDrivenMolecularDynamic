@@ -1,11 +1,10 @@
 package models;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.io.PrintWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public class Simulation {
@@ -119,8 +118,8 @@ public class Simulation {
     private void initializeSystem() {
         for (int i = 0; i < particlesCount; i++) {
             // randomize positions and velocities
-            double ballPositionX = randomDistanceNumber(ballRadius, width-ballRadius) * width;
-            double ballPositionY = randomDistanceNumber(ballRadius, heightFirstBox-ballRadius) * heightFirstBox;
+            double ballPositionX = randomDistanceNumber(ballRadius, width-ballRadius);
+            double ballPositionY = randomDistanceNumber(ballRadius, heightFirstBox-ballRadius);
             double ballVelocityX = ballVelocity * Math.cos(getRandomAngle());
             double ballVelocityY = ballVelocity * Math.sin(getRandomAngle());
 
