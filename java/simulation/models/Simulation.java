@@ -81,15 +81,43 @@ public class Simulation {
     }
 
     // change the sign in X
-    private int timeToVerticalWallCollision() {
-        // Logic for vertical wall collision detection and response goes here
-        return 0;
+    private double timeToVerticalWallCollision(Particle particle) {
+        double topWall = particle.getInBoxA() ? heightFirstBox : (heightFirstBox + heightSecondBox)/2;
+        double bottomWall = particle.getInBoxA() ? 0 : (heightFirstBox - heightSecondBox)/2;
+        double time;
+
+        if(particle.getBallVelocityY() > 0){
+            time = (topWall-ballRadius-particle.getBallPositionY())/particle.getBallVelocityY();
+        }else{
+            time = (bottomWall+ballRadius-particle.getBallPositionY())/particle.getBallVelocityY();
+        }
+        return time;
     }
 
     // change the sign in Y
-    private int timeToHorizontalWallCollision() {
-        // Logic for horizontal wall collision detection and response goes here
-        return 0;
+    private double timeToHorizontalWallCollision(Particle particle) {
+        double leftWall = 0;
+        double rightWall;
+        double time;
+
+        if(particle.getInBoxA()){
+            if( ((particle.getBallPositionY() - ballRadius ) > (heightFirstBox - heightSecondBox)/2) || ((particle.getBallPositionY() + ballRadius ) > (heightFirstBox + heightSecondBox)/2) ){
+                rightWall = heightFirstBox*2;
+            }
+            else{
+                rightWall = heightFirstBox;
+            }
+        }
+        else{
+            rightWall = heightFirstBox * 2;
+        }
+
+        if(particle.getBallVelocityX() > 0){
+            time = (rightWall-ballRadius-particle.getBallPositionX())/particle.getBallVelocityX();
+        }else{
+            time = (rightWall+ballRadius-particle.getBallPositionX())/particle.getBallVelocityX();
+        }
+        return time;
     }
 
     private int timeToMassCollision() {

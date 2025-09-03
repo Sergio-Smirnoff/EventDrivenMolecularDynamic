@@ -16,6 +16,8 @@ public class Particle {
     private double ballVelocityX = 0; // in m/s
     private double ballVelocityY = 0; // in m/s
 
+    private boolean inBoxA = true;
+
     private final PriorityQueue<Collision> collisions = new PriorityQueue<>();
 
     public Particle(int id, double positionX, double positionY, double velocityX, double velocityY) {
@@ -24,20 +26,6 @@ public class Particle {
         this.ballPositionY = positionY;
         this.ballVelocityX = velocityX;
         this.ballVelocityY = velocityY;
-    }
-
-    public int getId(){
-        return id;
-    }
-
-    public void setBallPosition(double ballPositionX, double ballPositionY) {
-        this.ballPositionX = ballPositionX;
-        this.ballPositionY = ballPositionY;
-    }
-
-    public void setBallVelocity(double ballVelocityX, double ballVelocityY) {
-        this.ballVelocityX = ballVelocityX;
-        this.ballVelocityY = ballVelocityY;
     }
 
     public void addCollision(Collision collision) {
@@ -58,6 +46,12 @@ public class Particle {
 
     public void removeCollisionWithParticle(int id){
         collisions.removeIf(collision -> collision.getParticleB().getId() == id);
+    }
+
+    /* ------------------------ Getters  ------------------------ */
+
+    public int getId(){
+        return id;
     }
 
     public PriorityQueue<Collision> getCollisions() {
@@ -88,4 +82,21 @@ public class Particle {
         return ballPositionY;
     }
 
+    public boolean getInBoxA(){ return inBoxA; }
+
+    /* ------------------------ Setters  ------------------------ */
+
+    public void setBallPosition(double ballPositionX, double ballPositionY) {
+        this.ballPositionX = ballPositionX;
+        this.ballPositionY = ballPositionY;
+    }
+
+    public void setBallVelocity(double ballVelocityX, double ballVelocityY) {
+        this.ballVelocityX = ballVelocityX;
+        this.ballVelocityY = ballVelocityY;
+    }
+
+    public void setInBoxA(boolean inBoxA) {
+        this.inBoxA = inBoxA;
+    }
 }
