@@ -16,8 +16,6 @@ public class Particle {
     private double ballVelocityX = 0; // in m/s
     private double ballVelocityY = 0; // in m/s
 
-    private boolean inBoxA = true;
-
     private final PriorityQueue<Collision> collisions = new PriorityQueue<>();
 
     public Particle(int id, double positionX, double positionY, double velocityX, double velocityY) {
@@ -82,8 +80,6 @@ public class Particle {
         return ballPositionY;
     }
 
-    public boolean getInBoxA(){ return inBoxA; }
-
     /* ------------------------ Setters  ------------------------ */
 
     public void setBallPosition(double ballPositionX, double ballPositionY) {
@@ -94,9 +90,5 @@ public class Particle {
     public void setBallVelocity(double ballVelocityX, double ballVelocityY) {
         this.ballVelocityX = ballVelocityX;
         this.ballVelocityY = ballVelocityY;
-    }
-
-    public void setInBoxA(boolean inBoxA) {
-        this.inBoxA = inBoxA;
     }
 }

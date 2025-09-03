@@ -5,12 +5,14 @@ public class Collision implements Comparable<Collision> {
     private final Particle particleA; // Main Particle
     private final Particle particleB; // Collision with
     private final Wall wall;
+    private final boolean fake;
 
-    public Collision(double time, Particle particleA, Particle particleB, Wall wall) {
+    public Collision(double time, Particle particleA, Particle particleB, Wall wall, boolean fake) {
         this.time = time;
         this.particleA = particleA;
         this.particleB = particleB;
-        this.wall = wall;   
+        this.wall = wall;
+        this.fake = fake;
     }
 
     public double getTime() {
