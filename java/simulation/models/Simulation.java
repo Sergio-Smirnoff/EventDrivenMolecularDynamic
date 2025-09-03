@@ -195,6 +195,18 @@ public class Simulation {
         }
     }
 
+    private double minCollisionTime(){
+        double tc = particles.getFirst().getNextCollision().getTime();
+
+        for(int i = 1; i < particles.size(); i++){
+            double time = particles.get(i).getNextCollision().getTime();
+            if(time < tc) {
+                tc = time;
+            }
+        }
+        return tc;
+    }
+
     private Collision ParticlesCollision(Particle p1, Particle p2) {
         // Logic for mass collision detection and response goes here
         return new Collision(0.0, null, null, null, false);
