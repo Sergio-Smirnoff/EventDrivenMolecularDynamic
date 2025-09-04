@@ -19,7 +19,7 @@ from dataclasses import dataclass
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 hdr_N = re.compile(r"^\s*N\s*:\s*(\d+)")
-hdr_L = re.compile(r"^\s*L\s*:\s*(\d+)")
+hdr_L = re.compile(r"^\s*L\s*:\s*([\d.]+)")
 
 @dataclass
 class Particle:
@@ -42,7 +42,7 @@ def leer_header(filename):
                 N = int(m.group(1))
             m = hdr_L.match(line)
             if m:
-                L = int(m.group(1))
+                L = float(m.group(1))
             if N is not None and L is not None:
                 break
     return N, L
@@ -80,14 +80,3 @@ def leer_frames(filename):
             yield time, pA, pB, particles
         else:
             i += 1
-
-# This main is meant to test file-reader.py
-# I ran the tests, hand checked, we are reading properly!
-if "__main__":
-    N, L = leer_header("./test-data/initial_state.csv")
-    print(f"N={N}, L={L}")
-
-    for t, pA, pB, particles in leer_frames("./test-data/initial_state.csv"):
-        print(f"Frame at t={t}, pA={pA}, pB={pB}")
-        for p in particles[:5]:
-            print("   ", p)

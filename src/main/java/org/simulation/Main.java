@@ -1,4 +1,6 @@
-import models.*;
+package org.simulation;
+
+import org.models.Simulation;
 
 public class Main {
 
