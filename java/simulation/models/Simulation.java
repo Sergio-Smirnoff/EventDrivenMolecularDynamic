@@ -92,89 +92,68 @@ public class Simulation {
 
 
     /**
-     * Function that calculates the time it takes for a particle to collide with vertical walls.
-     * Can return a fake collision in case the particle is in box A and reaches the fake
-     * vertical walls marked by the opening to box B
-     *
-     * @param particle describes the particle to study
-     * @return the new Collision item set to the corresponding wall
-     */
-    private Collision VerticalWallCollision(Particle particle) {
-        double time;
-        boolean fakeCollision = true;
-        double y = particle.getBallPositionY();
-
-        if(particle.getBallVelocityY() > 0){
-            double topWall;
-            if(y < bottomWallB){
-                topWall = bottomWallB;
-            }else if(y < topWallB){
-                topWall = topWallB;
-                fakeCollision = particle.getBallPositionX() < width;
-            }else{
-                topWall = heightFirstBox;
-                fakeCollision = false;
-            }
-
-            time = timeToPosition(y, topWall-ballRadius, particle.getBallVelocityY());
-
-        }else{
-            double bottomWall;
-            if(y > topWallB){
-                bottomWall = topWallB;
-            }else if(y > bottomWallB){
-                bottomWall = bottomWallB;
-                fakeCollision = particle.getBallPositionX() < width;
-            }else{
-                bottomWall = 0;
-                fakeCollision = false;
-            }
-
-            time = timeToPosition(y, bottomWall+ballRadius, particle.getBallVelocityY());
-
-        }
-        return new Collision(time, particle, null, Wall.VERTICAL, false);
-    }
-
-    /**
-     * Function that calculates the time it takes for a particle to collide with horizontal walls.
-     * Can return a fake collision in case the particle is in box B and reaches the fake horizontal
-     * wall marked by the opening to box B
+     * Function that calculates the time it takes for a particle to collide with Horizontal walls.
      *
      * @param particle describes the particle to study
      * @return the new Collision item set to the corresponding wall
      */
     private Collision HorizontalWallCollision(Particle particle) {
-        double time;
-        boolean fakeCollision = true;
+        double y = particle.getBallPositionY();
+        double finalPosition;
+
+        if(particle.getBallVelocityY() > 0){
+            double topWall = particle.getBallPositionX() < width ? heightFirstBox : topWallB;
+            finalPosition = topWall - ballRadius;
+        }else{
+            double bottomWall = particle.getBallPositionX() < width ? 0 : bottomWallB;
+            finalPosition = bottomWall + ballRadius;
+        }
+        double time = timeToPosition(y, finalPosition, particle.getBallVelocityY());
+        return new Collision(time, particle, null, Wall.HORIZONTAL);
+    }
+
+
+    /**
+     * Auxiliary function to calculate if particle is at height of opening of boxB.
+     * @param time time
+     * @param velocity particle velocity
+     * @return if the particle, at that time, will reach opening height of boxB
+     */
+    private boolean atOpeningHeight(double y0, double time, double velocity){
+        double yf = y0 + velocity * time;
+        return yf >= bottomWallB + ballRadius && yf <= topWallB - ballRadius;
+    }
+
+
+    /**
+     * Function that calculates the time it takes for a particle to collide with vertical walls.
+     * If the particle collides with the border wall at height of the opening of boxB then
+     * the collision is discarded, since it's not a real collision.
+     *
+     * @param particle describes the particle to study
+     * @return the new Collision item set to the corresponding wall
+     */
+    private Collision VerticalWallCollision(Particle particle) {
+        double finalPosition;
         double x = particle.getBallPositionX();
 
         if(particle.getBallVelocityX() > 0){
-            double rightWall;
-            if(x < width){
-                if(((particle.getBallPositionY() - ballRadius ) < bottomWallB) || ((particle.getBallPositionY() + ballRadius ) > topWallB)){
-                    fakeCollision = false;
-                }
-                rightWall = width;
-            }else{
-                rightWall = width*2;
-                fakeCollision = false;
-            }
-
-            time = timeToPosition(x, rightWall-ballRadius, particle.getBallVelocityX());
+            double rightWall = x < width ? width : width * 2;
+            finalPosition = rightWall - ballRadius;
         }else{
-            double leftWall;
-            if(x < width){
-                leftWall = 0;
-                fakeCollision = false;
-            }else{
-                leftWall = width;
-            }
-
-            time = timeToPosition(x, leftWall+ballRadius, particle.getBallVelocityX());
+            double leftWall = x < width ? 0 : width;
+            finalPosition = leftWall + ballRadius;
         }
-        return new Collision(time, particle, null, Wall.HORIZONTAL, fakeCollision);
+
+        double time = timeToPosition(x, finalPosition, particle.getBallVelocityX());
+
+        if(atOpeningHeight(particle.getBallPositionY(), time, particle.getBallVelocityY())){
+            return null;
+        }
+
+        return new Collision(time, particle, null, Wall.VERTICAL);
     }
+
 
     private void calculateCollisions(){
         // Clear previous collisions?
@@ -209,7 +188,7 @@ public class Simulation {
 
     private Collision ParticlesCollision(Particle p1, Particle p2) {
         // Logic for mass collision detection and response goes here
-        return new Collision(0.0, null, null, null, false);
+        return null;
     }
 
     private double calculateCollisionImpulse(){
