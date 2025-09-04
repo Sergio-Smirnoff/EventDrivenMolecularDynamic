@@ -1,4 +1,4 @@
-package models;
+package org.models;
 
 public class Collision implements Comparable<Collision> {
     private final double time; // Time until collision occurs

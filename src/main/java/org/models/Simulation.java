@@ -1,4 +1,4 @@
-package models;
+package org.models;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -6,6 +6,11 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 
 public class Simulation {
 
@@ -15,6 +20,7 @@ public class Simulation {
     private final double topWallB;
     private final double bottomWallB;
 
+    private final Logger logger = LoggerFactory.getLogger(Simulation.class);
 
     private final double ballVelocity = 0.01; // in m/s
     private final double ballRadius = 0.0015; // meters

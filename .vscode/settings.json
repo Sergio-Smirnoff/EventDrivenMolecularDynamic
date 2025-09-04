@@ -1,6 +1,7 @@
 {
     "java.project.sourcePaths": [
-        "java/simulation"
+        "src/main/java",
+        "src/test/java"
     ],
     "java.debug.settings.onBuildFailureProceed": true
 }

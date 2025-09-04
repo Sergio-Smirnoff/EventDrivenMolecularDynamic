@@ -1,5 +1,5 @@
 
-package models;
+package org.models;
 
 import java.util.PriorityQueue;
 
