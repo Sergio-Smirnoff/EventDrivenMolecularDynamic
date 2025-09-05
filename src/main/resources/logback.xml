@@ -11,5 +11,5 @@
 
     <!-- Ejemplo: nivel DEBUG solo para tu código -->
     <logger name="org.models" level="DEBUG"/>
-    <logger name="org.simulation" level="DEBUG"/>
+    <logger name="org.simulation" level="INFO"/>
 </configuration>

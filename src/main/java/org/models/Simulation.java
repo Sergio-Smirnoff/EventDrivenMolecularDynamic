@@ -68,7 +68,7 @@ public class Simulation {
     private void saveSimulationState(String filePath, boolean printHeaders) {
         // Logic to save the simulation state to a file
         Locale.setDefault(Locale.US);
-        try (PrintWriter writer = new PrintWriter(new FileWriter(filePath, true))) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(filePath, !printHeaders))) { // append mode if not printing headers
             // Write headers
             if (printHeaders) {
                 writer.println("N: " + particlesCount);
@@ -104,6 +104,28 @@ public class Simulation {
         return (finalPosition - initialPosition) / velocity;
     }
 
+        private void calculateParticleCollisions(Particle particle) {
+
+        // Collisions with walls
+        Collision collision = VerticalWallCollision(particle);
+        if(collision != null) {
+            particle.addCollision(collision);
+        }
+        collision = HorizontalWallCollision(particle);
+        if(collision != null) {
+            particle.addCollision(collision);
+        }
+        /* TODO: uncomment to enable particle collisions
+        for (Particle other : particles) {
+            if (other != particle) {
+                collision = calculateParticlesCollision(particle, other);
+                if (collision != null) {
+                    particle.addCollision(collision);
+                    other.addCollision(collision);
+                }
+            }
+        }*/
+    }
 
     /**
      * Function that calculates the time it takes for a particle to collide with Horizontal walls.
@@ -244,7 +266,8 @@ public class Simulation {
             if(collision != null) {
                 p1.addCollision(collision);
             }
-            
+
+            /* TODO: uncomment to enable particle collisions
             // Collisions with other particles
             for (int j = i + 1; j < particles.size(); j++) {
                 Particle p2 = particles.get(j);
@@ -254,7 +277,7 @@ public class Simulation {
                 }
                 p1.addCollision(particleCollision);
                 p2.addCollision(particleCollision);
-            }
+            }*/
         }
     }
 
@@ -304,11 +327,11 @@ public class Simulation {
     }
 
     private void removeOtherParticleCollisions(PriorityQueue<Collision> collisions, int id) {
-        for (Collision collision : collisions) {
-            collision.getParticleB().getCollisions().removeIf((col) -> col.getId() == id);
-        }
-
-        for (Collision collision : collisions) {
+        List<Collision> snapshot = new ArrayList<>(collisions);
+        for (Collision collision : snapshot) {
+            if (collision.getParticleB() != null) {
+                collision.getParticleB().getCollisions().removeIf((col) -> col.getId() == id);
+            }
             collision.getParticleA().getCollisions().removeIf((col) -> col.getId() == id);
         }
     }
@@ -322,8 +345,7 @@ public class Simulation {
      */
     private void makeWallCollision(Particle particle, Wall wall, double time) {
 
-        // remove the collisions with other particles
-        //
+        removeOtherParticleCollisions(particle.getCollisions(), particle.getId());
         particle.clearCollisions();
 
         updatePositions(time);
@@ -336,9 +358,6 @@ public class Simulation {
         } else {
             logger.error("Invalid Wall Collision");
         }
-
-        // recalculate collisions for the particle involved
-
 
     }
 
@@ -374,7 +393,7 @@ public class Simulation {
         }
 
         totalTime += nextCollision.getTime();
-        logger.info("Current time: {}", totalTime);
+        logger.debug("Current time: {}", totalTime);
 
         // need to check for wall
         Particle particleA = particles.get(nextCollision.getParticleA().getId());
@@ -390,7 +409,10 @@ public class Simulation {
         }
 
         // recalculate collisions for the particles involved
-
+        calculateParticleCollisions(particleA);
+        if (nextCollision.getParticleB() != null)
+            calculateParticleCollisions(nextCollision.getParticleB());
+        
 
     }
 
@@ -406,7 +428,7 @@ public class Simulation {
                 ballPositionX = randomDistanceNumber(ballRadius, width - ballRadius);
                 ballPositionY = randomDistanceNumber(ballRadius, heightFirstBox - ballRadius);
 
-
+                logger.debug("Initialized particle {} at position ({}, {})", i, ballPositionX, ballPositionY);
                 for (Particle other : particles) {
                     double dx = ballPositionX - other.getBallPositionX();
                     double dy = ballPositionY - other.getBallPositionY();
@@ -433,16 +455,20 @@ public class Simulation {
 
     public void runSimulation(int times, String filepath) {
 
+        logger.info("Starting simulation with {} particles and box height {}", particlesCount, heightSecondBox);
         // initialize particles
         initializeSystem();
+        logger.info("Initialized system with {} particles", particlesCount);
         saveSimulationState(filepath, true);
 
         calculateInitialCollisions();
+        logger.info("Calculated initial collisions");
 
         // iteration of collisions
         int current = 0;
         while (current++ < times) {
             makeCollision();
+            logger.info("Collision number: {}, exiting make collision", current);
             saveSimulationState(filepath, false);
         }
     }

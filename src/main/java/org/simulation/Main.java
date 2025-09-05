@@ -6,10 +6,10 @@ public class Main {
 
     public static void main(String[] args) {
         double heightSecondBox = 0.09;
-        int particlesCount = 1000;
+        int particlesCount = 250;
 
         Simulation simulation = new Simulation(heightSecondBox, particlesCount);
-        simulation.runSimulation(100, "./initial_state.csv");
+        simulation.runSimulation(1000, "./initial_state.csv");
     }
 
 }

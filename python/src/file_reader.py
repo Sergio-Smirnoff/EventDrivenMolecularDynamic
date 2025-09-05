@@ -1,25 +1,11 @@
+# src/file_reader.py
 import re
-import os
 from dataclasses import dataclass
 
-"""  
-     * Headers --> N: particlesCount
-     *         --> L: heightSecondBox
-     * time;pressureA;pressureB;  :: These are not headers, they are values
-     * positionX;positionY;velocityX;velocityY  :: These are actual headers
-     * .....
-     * tm;pAm;PBm
-     * positionX;positionY;velocityX;velocityY
-     * px0;py0;vx0;vy0
-     * ...
-     * pxn;pyn;vxn;vyn
-     * tm+1;pAm+1;PBm+1
-"""
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-hdr_N = re.compile(r"^\s*N\s*:\s*(\d+)")
-hdr_L = re.compile(r"^\s*L\s*:\s*([\d.]+)")
+hdr_N = re.compile(r"^\s*N\s*:\s*(\d+)\s*$", re.IGNORECASE)
+hdr_L = re.compile(r"^\s*L\s*:\s*([+-]?\d+(?:\.\d+)?)\s*$", re.IGNORECASE)
+hdr_cols = re.compile(r"^\s*positionX\s*;\s*positionY\s*;\s*velocityX\s*;\s*velocityY\s*$", re.IGNORECASE)
+hdr_time = re.compile(r"^\s*([^;]+)\s*;\s*$")
 
 @dataclass
 class Particle:
@@ -29,54 +15,64 @@ class Particle:
     vx: float
     vy: float
 
-def leer_header(filename):
-    N = None
-    L = None
-    with open(os.path.join(BASE_DIR, filename)) as f:
+def leer_header(path: str):
+    N, L = None, None
+    with open(path, "r", encoding="utf-8") as f:
         for line in f:
-            line = line.strip()
-            if not line:
+            s = line.strip()
+            if not s:
                 continue
-            m = hdr_N.match(line)
+            m = hdr_N.match(s)
             if m:
                 N = int(m.group(1))
-            m = hdr_L.match(line)
+                continue
+            m = hdr_L.match(s)
             if m:
                 L = float(m.group(1))
+                continue
             if N is not None and L is not None:
                 break
+    if N is None or L is None:
+        raise ValueError("No se pudieron leer correctamente los headers N y L.")
     return N, L
 
-def leer_frames(filename):
-    N, L = leer_header(os.path.join(BASE_DIR, filename))
+def leer_frames(path: str):
+    N, L = leer_header(path)
 
-    with open(os.path.join(BASE_DIR, filename)) as f:
-        lines = [l.strip() for l in f if l.strip()]
+    with open(path, "r", encoding="utf-8") as f:
+        lines = [ln.strip() for ln in f if ln.strip()]
 
     i = 0
-    while i < len(lines):
-        line = lines[i]
+    # saltar hasta el primer "tm;"
+    while i < len(lines) and not hdr_time.match(lines[i]):
+        i += 1
 
-        # gotta skip headers :D
-        if hdr_N.match(line) or hdr_L.match(line):
+    while i < len(lines):
+        m_time = hdr_time.match(lines[i])
+        if not m_time:
             i += 1
             continue
 
-        # Frame start: tm; pAm; pBm
-        if line.count(";") >= 2 and not line.startswith("positionX"):
-            time, pA, pB = [v for v in line.split(";")[:3]]
+        t_str = m_time.group(1).strip()
+        try:
+            t = float(t_str)
+        except ValueError:
+            t = t_str
+        i += 1
+
+        # saltar encabezado de columnas si aparece
+        if i < len(lines) and hdr_cols.match(lines[i]):
             i += 1
 
-            # gotta skip the "positionX;positionY;velocityX;velocityY" row
-            if lines[i].startswith("positionX"):
-                i += 1
-
-            particles = []
-            for pid in range(N):  # read exactly N particles
-                px, py, vx, vy = [v for v in lines[i].split(";")]
-                particles.append(Particle(pid, px, py, vx, vy))
-                i += 1
-
-            yield time, pA, pB, particles
-        else:
+        particles = []
+        for pid in range(N):
+            if i >= len(lines):
+                raise ValueError("Fin inesperado del archivo al leer partículas.")
+            parts = lines[i].split(";")
+            if len(parts) < 4:
+                raise ValueError(f"Línea inválida de partícula: '{lines[i]}'")
+            px, py, vx, vy = map(float, parts[:4])
+            particles.append(Particle(pid, px, py, vx, vy))
             i += 1
+
+        yield t, particles
