@@ -77,4 +77,4 @@ def animate(filename, save_as=None):
         plt.show()
 
 if __name__ == "__main__":
-    animate("./test-data/initial_state.csv", save_as="animacion.mp4")
+    animate("../test-data/initial_state.csv", save_as="animacion.mp4")
