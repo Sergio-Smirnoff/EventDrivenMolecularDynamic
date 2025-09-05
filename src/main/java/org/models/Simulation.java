@@ -85,14 +85,15 @@ public class Simulation {
      * Locale.setDefault(Locale.US); for writing the decimals with comma
      */
 
-    private void saveSimulationState(String filePath) {
+    private void saveSimulationState(String filePath, boolean printHeaders) {
         // Logic to save the simulation state to a file
         Locale.setDefault(Locale.US);
-        try (PrintWriter writer = new PrintWriter(new FileWriter(filePath))) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(filePath, true))) {
             // Write headers
-            writer.println("N: " + particlesCount);
-            writer.println("L: " + heightSecondBox);
-
+            if (printHeaders) {
+                writer.println("N: " + particlesCount);
+                writer.println("L: " + heightSecondBox);
+            }
             double[] pressures = calculatePressures();
             // TODO: check if for moment 0 is necesary to add the pressures that will be 0
             writer.printf("%g;%g;%g\n", totalTime, pressures[0], pressures[1]); // fix with pressure
@@ -399,20 +400,22 @@ public class Simulation {
 
         // initialize particles
         initializeSystem();
-        saveSimulationState(filepath);
+        saveSimulationState(filepath, true);
 
         calculateInitialCollisions();
 
+        
         int current = 0;
 
         while (current < times) {
-            if (currentTime/timeStep > 1) {
-                current++;
+            if (!(currentTime/timeStep < 1)) {
                 currentTime = 0;
+                current++;
                 totalTime+=timeStep;
-                saveSimulationState(filepath);
+                saveSimulationState(filepath, false);
             }
-            makeCollision();
+            currentTime += 1;
+            //makeCollision();
         }
     }
 }
