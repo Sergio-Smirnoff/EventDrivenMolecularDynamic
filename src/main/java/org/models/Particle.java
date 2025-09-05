@@ -36,7 +36,7 @@ public class Particle {
     }
 
     public Collision getNextCollision() {
-        return collisions.poll();
+        return collisions.peek();
     }
 
     public boolean hasCollisions() {
