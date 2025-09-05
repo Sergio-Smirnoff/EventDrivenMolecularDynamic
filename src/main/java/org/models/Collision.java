@@ -1,7 +1,8 @@
 package org.models;
 
 public class Collision implements Comparable<Collision> {
-    private final double time; // Time until collision occurs
+    private int id;
+    private double time; // Time until collision occurs
     private final Particle particleA; // Main Particle
     private final Particle particleB; // Collision with
     private final Wall wall;
@@ -12,6 +13,8 @@ public class Collision implements Comparable<Collision> {
         this.particleB = particleB;
         this.wall = wall;
     }
+
+    public int getId(){ return id; }
 
     public double getTime() {
         return time;
@@ -27,6 +30,10 @@ public class Collision implements Comparable<Collision> {
 
     public Wall getWall() {
         return wall;
+    }
+
+    public void setTime(double time) {
+        this.time = time;
     }
 
     public boolean collisionWithWall(){
