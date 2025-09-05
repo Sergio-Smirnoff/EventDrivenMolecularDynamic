@@ -196,30 +196,59 @@ public class Simulation {
         return new Collision(time, particle, null, Wall.VERTICAL);
     }
 
+    // delta V = vxj - vxi , vyj -vyi
+    // delta r = xj-xi , yj - yi
+    // delta v * delta r = vxj - vxi *  xj-xi + vyj -vyi *  yj - yi
+    // o = ri + rj
+
+    /**
+     * Calculates ∆v∆r
+     * @param dv is ∆v = (∆vx, ∆vy)
+     * @param dr is ∆r = (∆rx, ∆ry)
+     * @return product
+     */
+    private double calculateDvDr(double[] dv, double[] dr) {
+        return (dv[0]* dr[0] + dv[1] * dr[1]);
+    }
+
+    /**
+     * Calculates particles collision
+     * @param p1 first particle
+     * @param p2 second particle
+     * @return Collision between said particles
+     */
     private Collision calculateParticlesCollision(Particle p1, Particle p2) {
         // Logic for mass collision detection and response goes here
 
         double time = 0;
-        double dvx = ballVelocity * p2.getBallPositionX() - ballVelocity * p1.getBallPositionX();
-        double dvy = ballVelocity * p2.getBallPositionY() - ballVelocity * p1.getBallPositionY();
-        double drx = p2.getBallPositionX() - p1.getBallPositionX();
-        double dry = p2.getBallPositionY() - p1.getBallPositionY();
+        // ∆v = (∆vx, ∆vy)
+        double[] dv = {0,0};
+        dv[0] = p2.getBallVelocityX() - p1.getBallPositionX();
+        dv[1] = p2.getBallPositionY() - p1.getBallPositionY();
+        // ∆r = (∆rx, ∆ry)
+        double[] dr = {0,0};
+        dr[0] = p2.getBallPositionX() - p1.getBallPositionX();
+        dr[1] = p2.getBallPositionY() - p1.getBallPositionY();
 
-        double calc = calculateDvDr(p1, p2);
-        double dv = Math.pow(dvx, 2.0) + Math.pow(dvy, 2.0);
+        double calc = (dv[0]* dr[0] + dv[1] * dr[1]);
+        double dvdv = Math.pow(dv[0], 2.0) + Math.pow(dv[1], 2.0);
+        double drdr = Math.pow(dr[0], 2.0) + Math.pow(dr[1], 2.0);
         double o = p1.getBallRadius() + p2.getBallRadius();
-        double d = Math.pow(calc,2.0)-(dv +(Math.pow(drx, 2.0)+Math.pow(dry, 2.0))-Math.pow(o,2.0));
+        double d = Math.pow(calc,2.0) - ( dvdv * (drdr - o) );
 
         // slide 14
         if ( calc >= 0 || d < 0){
             return null;
         }
-        time = -(calc + Math.sqrt(d))/ dv;
+        time = -(calc + Math.sqrt(d))/ dvdv;
         logger.debug("time: {}", time);
 
         return new Collision(time, p1, p2, null);
     }
 
+    /**
+     * Calculates all collisions for all particles
+     */
     private void calculateInitialCollisions() {
 
         for (int i = 0; i < particles.size(); i++) {
@@ -249,7 +278,7 @@ public class Simulation {
      *
      * @return collision that will first occur
      */
-    private Collision nextCollision() {
+    private Collision firstCollision() {
         Collision collisionToOccur = particles.getFirst().getNextCollision();
 
         for (int i = 1; i < particles.size(); i++) {
@@ -261,21 +290,16 @@ public class Simulation {
         return collisionToOccur;
     }
 
-
-    // delta V = vxj - vxi , vyj -vyi
-    // delta r = xj-xi , yj - yi
-    // delta v * delta r = vxj - vxi *  xj-xi + vyj -vyi *  yj - yi
-    // o = ri + rj
-    private double calculateDvDr(Particle particleA, Particle particleB) {
-        double dvx = ballVelocity * particleB.getBallPositionX() - ballVelocity * particleA.getBallPositionX();
-        double dvy = ballVelocity * particleB.getBallPositionY() - ballVelocity * particleA.getBallPositionY();
-        double drx = particleB.getBallPositionX() - particleA.getBallPositionX();
-        double dry = particleB.getBallPositionY() - particleA.getBallPositionY();
-        return (dvx * drx + dvy * dry);
-    }
-
     private double calculateCollisionImpulse(Particle particleA, Particle particleB) {
-        return  calculateDvDr(particleA,particleB)/ (particleA.getBallRadius() + particleB.getBallRadius());
+        // ∆v = (∆vx, ∆vy)
+        double[] dv = {0,0};
+        dv[0] = particleB.getBallVelocityX() - particleA.getBallPositionX();
+        dv[1] = particleB.getBallPositionY() - particleA.getBallPositionY();
+        // ∆r = (∆rx, ∆ry)
+        double[] dr = {0,0};
+        dr[0] = particleB.getBallPositionX() - particleA.getBallPositionX();
+        dr[1] = particleB.getBallPositionY() - particleA.getBallPositionY();
+        return  calculateDvDr(dv, dr)/ (particleA.getBallRadius() + particleB.getBallRadius());
     }
 
 
@@ -360,7 +384,7 @@ public class Simulation {
      */
     private void makeCollision() {
 
-        Collision nextCollision = nextCollision();
+        Collision nextCollision = firstCollision();
 
         // update simulation time
         if(nextCollision == null){
