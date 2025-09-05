@@ -136,6 +136,11 @@ public class Simulation {
      * If the particle collides with the border wall at height of the opening of boxB then
      * the collision is discarded, since it's not a real collision.
      *
+     *
+     * if i discard collision then i should discard the other collision as well,
+     * the horizontal corresponding
+     *
+     *
      * @param particle describes the particle to study
      * @return the new Collision item set to the corresponding wall
      */
