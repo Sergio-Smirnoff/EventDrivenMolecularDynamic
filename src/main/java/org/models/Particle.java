@@ -27,7 +27,9 @@ public class Particle {
     }
 
     public void addCollision(Collision collision) {
-        collisions.add(collision);
+        if(collision != null){
+            collisions.add(collision);
+        }
     }
 
     public void clearCollisions() {
@@ -44,6 +46,10 @@ public class Particle {
 
     public void removeCollisionWithParticle(int id){
         collisions.removeIf(collision -> collision.getParticleB().getId() == id);
+    }
+
+    public boolean isBoxA(){
+        return ballPositionX > 0.09;
     }
 
     /* ------------------------ Getters  ------------------------ */

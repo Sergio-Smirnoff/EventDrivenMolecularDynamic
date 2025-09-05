@@ -9,7 +9,7 @@ public class Main {
         int particlesCount = 1000;
 
         Simulation simulation = new Simulation(heightSecondBox, particlesCount);
-        simulation.runSimulation();
+        simulation.runSimulation(100, ".");
     }
 
 }
