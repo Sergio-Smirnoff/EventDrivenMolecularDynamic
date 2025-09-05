@@ -59,7 +59,7 @@ public class Simulation {
      * Save in csv format
      * Headers --> N: particlesCount
      *         --> L: heightSecondBox
-     * time;pressureA;pressureB
+     * time;
      * Header for particles
      * positionX;positionY;velocityX;velocityY
      * Locale.setDefault(Locale.US); for writing the decimals with comma
