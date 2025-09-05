@@ -27,9 +27,7 @@ public class Particle {
     }
 
     public void addCollision(Collision collision) {
-        if(collision != null){
-            collisions.add(collision);
-        }
+        collisions.add(collision);
     }
 
     public void clearCollisions() {

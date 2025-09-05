@@ -226,8 +226,12 @@ public class Simulation {
             Particle p1 = particles.get(i);
 
             // Collisions with walls
-            p1.addCollision(VerticalWallCollision(p1));
+            Collision collision = VerticalWallCollision(p1);
+            if(collision != null) {
+                p1.addCollision(collision);
+            }
             p1.addCollision(HorizontalWallCollision(p1));
+
 
             // Collisions with other particles
             for (int j = i + 1; j < particles.size(); j++) {
@@ -271,15 +275,15 @@ public class Simulation {
     }
 
     private double calculateCollisionImpulse(Particle particleA, Particle particleB) {
-
         return  calculateDvDr(particleA,particleB)/ (particleA.getBallRadius() + particleB.getBallRadius());
     }
 
 
     private void updatePositions(double time) {
         for (Particle particle : particles) {
-            double velocity = Math.sqrt(Math.pow(particle.getBallPositionX(), 2.0) + Math.pow(particle.getBallPositionY(), 2.0));
-            particle.setBallPosition(particle.getBallPositionX() + velocity * time, particle.getBallPositionY() + velocity * time);
+            double newX = particle.getBallPositionX() + particle.getBallVelocityX() * time;
+            double newY = particle.getBallPositionY() + particle.getBallVelocityY() * time;
+            particle.setBallPosition(newX, newY);
 
             // update collision times
             for (Collision collision : particle.getCollisions()) {
