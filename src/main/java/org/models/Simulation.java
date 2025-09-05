@@ -245,7 +245,7 @@ public class Simulation {
 
         for (int i = 1; i < particles.size(); i++) {
             Collision collision = particles.get(i).getNextCollision();
-            if (collision.getTime() < collisionToOccur.getTime()) {
+            if ( collision != null && collisionToOccur != null && collision.getTime() < collisionToOccur.getTime()) {
                 collisionToOccur = collision;
             }
         }
@@ -354,6 +354,10 @@ public class Simulation {
         Collision nextCollision = nextCollision();
 
         // update simulation time
+        if(nextCollision == null){
+            return;
+        }
+
         currentTime += nextCollision.getTime();
         logger.info("Current time: {}", currentTime);
 
@@ -365,7 +369,7 @@ public class Simulation {
 
         } else if (nextCollision.getParticleB() != null) {
             // TODO: comment to view functionality of the wall collisions
-            makeParticleCollision(particleA, nextCollision.getParticleB(), nextCollision.getTime());
+            //makeParticleCollision(particleA, nextCollision.getParticleB(), nextCollision.getTime());
         } else {
             logger.error("next collision was null");
         }
@@ -385,6 +389,10 @@ public class Simulation {
             particles.add(particle);
 
         }
+    }
+
+    private double calculateCollisionPressure(Particle p){
+        return 0;
     }
 
     public void runSimulation(int times, String filepath) {
