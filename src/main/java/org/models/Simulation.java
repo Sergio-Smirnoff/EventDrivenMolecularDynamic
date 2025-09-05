@@ -29,9 +29,7 @@ public class Simulation {
     private int particlesCount = 250;
 
 
-    private double totalTime = 0;
-    private double currentTime = 0; //in seconds
-    private final double timeStep = 0.1; // in seconds
+    private double totalTime = 0; // in seconds
 
 
     private final List<Particle> particles = new ArrayList<>(particlesCount);
@@ -198,6 +196,8 @@ public class Simulation {
      * @param p2 second particle
      * @return Collision between said particles
      */
+
+    //TODO: check calculation of time, giving negative values
     private Collision calculateParticlesCollision(Particle p1, Particle p2) {
         // Logic for mass collision detection and response goes here
 
@@ -240,8 +240,10 @@ public class Simulation {
             if(collision != null) {
                 p1.addCollision(collision);
             }
-            p1.addCollision(HorizontalWallCollision(p1));
-
+            collision = HorizontalWallCollision(p1);
+            if(collision != null) {
+                p1.addCollision(collision);
+            }
             
             // Collisions with other particles
             for (int j = i + 1; j < particles.size(); j++) {
@@ -304,7 +306,10 @@ public class Simulation {
     private void removeOtherParticleCollisions(PriorityQueue<Collision> collisions, int id) {
         for (Collision collision : collisions) {
             collision.getParticleB().getCollisions().removeIf((col) -> col.getId() == id);
-            // TODO: check if necesary to collide in A
+        }
+
+        for (Collision collision : collisions) {
+            collision.getParticleA().getCollisions().removeIf((col) -> col.getId() == id);
         }
     }
 
@@ -315,7 +320,6 @@ public class Simulation {
      * @param particle
      * @param wall
      */
-    // TODO: view how to calculate the impulse with the walls
     private void makeWallCollision(Particle particle, Wall wall, double time) {
 
         // remove the collisions with other particles
@@ -365,15 +369,12 @@ public class Simulation {
 
         Collision nextCollision = firstCollision();
 
-        // update simulation time
         if(nextCollision == null){
             return;
         }
 
-
-        totalTime += nextCollision.getTime(); // TODO CHECK IF THIS IS CORRECT
-        currentTime += nextCollision.getTime();
-        logger.info("Current time: {}", currentTime);
+        totalTime += nextCollision.getTime();
+        logger.info("Current time: {}", totalTime);
 
         // need to check for wall
         Particle particleA = particles.get(nextCollision.getParticleA().getId());
@@ -395,18 +396,36 @@ public class Simulation {
 
     private void initializeSystem() {
         for (int i = 0; i < particlesCount; i++) {
-            // randomize positions and velocities
-            double ballPositionX = randomDistanceNumber(ballRadius, width - ballRadius);
-            double ballPositionY = randomDistanceNumber(ballRadius, heightFirstBox - ballRadius);
-            double ballVelocityX = ballVelocity * Math.cos(getRandomAngle());
-            double ballVelocityY = ballVelocity * Math.sin(getRandomAngle());
-            // TODO: check for overlapping particles
+            double ballPositionX;
+            double ballPositionY;
+            boolean overlaps;
+
+            do {
+                overlaps = false;
+
+                ballPositionX = randomDistanceNumber(ballRadius, width - ballRadius);
+                ballPositionY = randomDistanceNumber(ballRadius, heightFirstBox - ballRadius);
+
+
+                for (Particle other : particles) {
+                    double dx = ballPositionX - other.getBallPositionX();
+                    double dy = ballPositionY - other.getBallPositionY();
+                    double distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 2 * ballRadius) {
+                        overlaps = true;
+                        break; 
+                    }
+                }
+            } while (overlaps);
+            double angle = getRandomAngle();
+            double ballVelocityX = ballVelocity * Math.cos(angle);
+            double ballVelocityY = ballVelocity * Math.sin(angle);
             Particle particle = new Particle(i, ballPositionX, ballPositionY, ballVelocityX, ballVelocityY);
-
             particles.add(particle);
-
         }
     }
+
 
     private double calculateCollisionPressure(Particle p){
         return 0;
@@ -420,17 +439,11 @@ public class Simulation {
 
         calculateInitialCollisions();
 
-        
+        // iteration of collisions
         int current = 0;
-
-        while (current < times) {
-            if (!(currentTime/timeStep < 1)) {
-                currentTime = 0;
-                current++;
-                totalTime+=timeStep;
-                saveSimulationState(filepath, false);
-            }
+        while (current++ < times) {
             makeCollision();
+            saveSimulationState(filepath, false);
         }
     }
 }
