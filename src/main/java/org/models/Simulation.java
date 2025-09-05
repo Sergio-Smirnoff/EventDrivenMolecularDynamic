@@ -414,8 +414,7 @@ public class Simulation {
                 totalTime+=timeStep;
                 saveSimulationState(filepath, false);
             }
-            currentTime += 1;
-            //makeCollision();
+            makeCollision();
         }
     }
 }
