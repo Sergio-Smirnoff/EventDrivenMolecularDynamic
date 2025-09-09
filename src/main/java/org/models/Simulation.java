@@ -108,13 +108,13 @@ public class Simulation {
     private void calculateParticleCollisions(Particle particle) {
 
         // Collisions with walls
-        Collision collision = VerticalWallCollision(particle);
-        if(collision != null) {
-            particle.addCollision(collision);
-        }
-        collision = HorizontalWallCollision(particle);
-        if(collision != null) {
-            particle.addCollision(collision);
+        Collision collisionV = VerticalWallCollision(particle);
+        Collision collisionH = HorizontalWallCollision(particle);
+
+        if (collisionV.getTime() >= collisionH.getTime()) {
+            particle.addCollision(collisionH);
+        } else {
+            particle.addCollision(collisionV);
         }
         /* TODO: uncomment to enable particle collisions
         for (Particle other : particles) {
