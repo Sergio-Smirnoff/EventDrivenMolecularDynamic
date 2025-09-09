@@ -43,10 +43,6 @@ public class Particle {
         return !collisions.isEmpty();
     }
 
-    public void removeCollisionWithParticle(int id){
-        collisions.removeIf(collision -> collision.getParticleB().getId() == id);
-    }
-
     public boolean isBoxA(){
         return ballPositionX > 0.09;
     }
