@@ -74,15 +74,15 @@ public class Simulation {
      * @return collision that will occur next
      */
     private Collision findNextEvent() {
-        Collision collisionToOccur = particles.getFirst().getNextCollision();
-
-        for (int i = 1; i < particles.size(); i++) {
-            Collision collision = particles.get(i).getNextCollision();
-            if ( collision != null && collisionToOccur != null && collision.getTime() < collisionToOccur.getTime()) {
-                collisionToOccur = collision;
+        Collision nextEvent = null;
+        for (Particle p : particles) {
+            if (!p.hasCollisions()) continue;
+            Collision earliestForP = p.getNextCollision();
+            if (nextEvent == null || earliestForP.getTime() < nextEvent.getTime()) {
+                nextEvent = earliestForP;
             }
         }
-        return collisionToOccur;
+        return nextEvent;
     }
 
     /**
@@ -139,9 +139,9 @@ public class Simulation {
         if(collision.getWall() != null){
             if(collision.isTrueCollision()){
                 handleWallBounce(particleA, collision.getWall());
+                calculateParticleCollisions(particleA);
             }
             // recalcular colisiones para la primer partícula
-            calculateParticleCollisions(particleA);
         }
     }
 
@@ -212,7 +212,7 @@ public class Simulation {
      * If the particle collides with the border wall at height of the opening of boxB then
      * the collision is discarded, since it's not a real collision.
      * todo:if i have x < width but the particle has a little bit of itself in box B, is
-     *      it in box A or in box B? --> usa el centro de la particula como referencia para eso ?:P
+     *      it in box A or in box B?
      *
      *
      *
@@ -243,7 +243,7 @@ public class Simulation {
         boolean atOpeningHeight = atOpeningHeight(particle.getBallPositionY(), time, particle.getBallVelocityY());
 
         if (atOpeningHeight && ((particle.getBallVelocityX() > 0 && inBoxA) || (particle.getBallVelocityX() < 0 && !inBoxA))) {
-            return null;
+            return new Collision(time, particle.getId(), Wall.VERTICAL, false);
         }
 
         return new Collision(time, particle.getId(), Wall.VERTICAL);

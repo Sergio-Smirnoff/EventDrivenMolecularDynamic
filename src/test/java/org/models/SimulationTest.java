@@ -12,18 +12,18 @@ import static org.junit.jupiter.api.Assertions.*;
 public class SimulationTest {
 
     private Simulation sim;
-    private Method verticalWallCollisionMethod;
-    private Method horizontalWallCollisionMethod;
+    private Method timeToVerticalWall;
+    private Method timeToHorizontalWall;
 
     @BeforeEach
     void setUp() throws NoSuchMethodException{
         sim = new Simulation(0.09, 1);
-        verticalWallCollisionMethod = Simulation.class.getDeclaredMethod("VerticalWallCollision", Particle.class);
-        horizontalWallCollisionMethod = Simulation.class.getDeclaredMethod("HorizontalWallCollision", Particle.class);
+        timeToVerticalWall = Simulation.class.getDeclaredMethod("timeToVerticalWall", Particle.class);
+        timeToHorizontalWall = Simulation.class.getDeclaredMethod("timeToHorizontalWall", Particle.class);
 
         // Allow access to the private methods
-        verticalWallCollisionMethod.setAccessible(true);
-        horizontalWallCollisionMethod.setAccessible(true);
+        timeToVerticalWall.setAccessible(true);
+        timeToHorizontalWall.setAccessible(true);
     }
 
     /* --------------------- Vertical Wall Collision Cases --------------------- */
@@ -33,7 +33,7 @@ public class SimulationTest {
         double expectedTime = 7.7;
 
         // When we call the private method
-        Collision collision = (Collision) verticalWallCollisionMethod.invoke(sim, particle);
+        Collision collision = (Collision) timeToVerticalWall.invoke(sim, particle);
 
         // Then the collision time and wall type should be correct
         assertNotNull(collision);
@@ -48,7 +48,7 @@ public class SimulationTest {
         double expectedTime = 9.127906977;
 
         // When we call the private method
-        Collision collision = (Collision) horizontalWallCollisionMethod.invoke(sim, particle);
+        Collision collision = (Collision) timeToHorizontalWall.invoke(sim, particle);
 
         // Then the collision time and wall type should be correct
         assertNotNull(collision);
