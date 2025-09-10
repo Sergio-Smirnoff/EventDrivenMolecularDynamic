@@ -17,7 +17,7 @@ public class Simulation {
 
     private final double heightFirstBox = 0.09;
     private final double width = 0.09;
-    private double heightSecondBox = 0.09; // this is a variable // Considerar L = 0,03; 0,05; 0,07 y 0,09 m.
+    private final double heightSecondBox;
     private final double topWallB;
     private final double bottomWallB;
 
@@ -26,22 +26,242 @@ public class Simulation {
     private final double ballVelocity = 0.01; // in m/s
     private final double ballRadius = 0.0015; // meters
 
-    private int particlesCount = 250;
-
-
+    private final int particlesCount;
     private double totalTime = 0; // in seconds
-
-
-    private final List<Particle> particles = new ArrayList<>(particlesCount);
-
+    private final List<Particle> particles;
 
     public Simulation(double heightSecondBox, int particlesCount) {
         this.heightSecondBox = heightSecondBox;
         this.particlesCount = particlesCount;
         this.topWallB = (heightFirstBox + heightSecondBox) / 2;
         this.bottomWallB = (heightFirstBox - heightSecondBox) / 2;
+        this.particles = new ArrayList<>(particlesCount);
     }
 
+    /* ----------------------- Main Simulation Loop Functions ----------------------- */
+
+    public void runSimulation(int maxIterations, String filepath){
+        logger.info("Starting Simulation wit");
+        initializeSystem();
+        saveSimulationState(filepath, true);
+        calculateInitialCollisions();
+
+        for (int collisionCount = 1; collisionCount <= maxIterations; collisionCount++) {
+            logger.info("***********************");
+            logger.info("Collision number: {}", collisionCount);
+
+            // 1. Find the very next event in the entire system.
+            Collision nextEvent = findNextEvent();
+            if (nextEvent == null || nextEvent.getTime() == Double.POSITIVE_INFINITY) {
+                logger.warn("No more collisions can be predicted. Ending simulation.");
+                break;
+            }
+
+            // 3. Advance the system to the time of that event.
+            advanceSystem(nextEvent.getTime());
+
+            // 4. Resolve the collision and re-predict futures for involved particles.
+            resolveCollision(nextEvent);
+
+            saveSimulationState(filepath, false);
+        }
+    }
+
+
+    /**
+     * Finds the next event that will occur
+     *
+     * @return collision that will occur next
+     */
+    private Collision findNextEvent() {
+        Collision collisionToOccur = particles.getFirst().getNextCollision();
+
+        for (int i = 1; i < particles.size(); i++) {
+            Collision collision = particles.get(i).getNextCollision();
+            if ( collision != null && collisionToOccur != null && collision.getTime() < collisionToOccur.getTime()) {
+                collisionToOccur = collision;
+            }
+        }
+        return collisionToOccur;
+    }
+
+    /**
+     * Advances the system to the next event
+     *
+     * @param timeSkip Time to be fast forwarded
+     */
+    private void advanceSystem(double timeSkip){
+        if(timeSkip < 0){
+            logger.warn("Attempted to advance time by a negative value: {}. OJO.", timeSkip);
+            return;
+        }
+
+        for (Particle p : particles) {
+            p.setBallPosition(
+                    p.getBallPositionX() + p.getBallVelocityX() * timeSkip,
+                    p.getBallPositionY() + p.getBallVelocityY() * timeSkip
+            );
+            // Decrement the time for all pending collisions for this particle.
+            for (Collision c : p.getCollisions()) {
+                c.setTime(c.getTime() - timeSkip);
+            }
+        }
+
+        totalTime += timeSkip;
+        logger.debug("Advanced time by {}. Total time: {}", timeSkip, totalTime);
+    }
+
+
+    /* ----------------------- Collision Functions ----------------------- */
+
+    // ojo con getParticleB porque no se si sería esa la partícula a chequear, depende de como se guarde la colisión espejada
+    private void cleanCollisions(Particle collidingParticle){
+        PriorityQueue<Collision> collisions = collidingParticle.getCollisions();
+        for (Collision collision : collisions) {
+            if (collision.getWall() == null) {
+                Particle particleB = particles.get(collision.getParticleB());
+                particleB.getCollisions().removeIf((col) -> col.getParticleB() == collidingParticle.getId());
+            }
+        }
+        collidingParticle.clearCollisions();
+    }
+
+    private void handleWallBounce(Particle p, Wall w){
+        if (w.equals(Wall.VERTICAL)) {
+            p.setBallVelocity(-p.getBallVelocityX(), p.getBallVelocityY());
+        } else {
+            p.setBallVelocity(p.getBallVelocityX(), -p.getBallVelocityY());
+        }
+    }
+
+    private void resolveCollision(Collision collision) {
+        Particle particleA = particles.get(collision.getParticleA());
+        if(collision.getWall() != null){
+            if(collision.isTrueCollision()){
+                handleWallBounce(particleA, collision.getWall());
+            }
+            // recalcular colisiones para la primer partícula
+            calculateParticleCollisions(particleA);
+        }
+    }
+
+    /**
+     * Calculates all collisions for all particles
+     */
+    private void calculateInitialCollisions() {
+        for (Particle p1 : particles) {
+            calculateParticleCollisions(p1);
+        }
+    }
+
+    /**
+     * Calculates collisions for particle
+     * @param particle particle
+     */
+    private void calculateParticleCollisions(Particle particle) {
+        cleanCollisions(particle);
+        // Collisions with walls
+        particle.addCollision(timeToVerticalWall(particle));
+        particle.addCollision(timeToHorizontalWall(particle));
+    }
+
+    /**
+     * Function that calculates the time it takes for a particle to collide with Horizontal walls.
+     *
+     * @param particle describes the particle to study
+     * @return the new Collision item set to the corresponding wall
+     */
+    private Collision timeToHorizontalWall(Particle particle) {
+        double y = particle.getBallPositionY();
+        double finalPosition;
+
+        if (particle.getBallVelocityY() > 0) {
+            double topWall = particle.getBallPositionX() < width ? heightFirstBox : topWallB;
+            finalPosition = topWall - ballRadius;
+        } else {
+            double bottomWall = particle.getBallPositionX() < width ? 0 : bottomWallB;
+            finalPosition = bottomWall + ballRadius;
+        }
+        double time = timeToPosition(y, finalPosition, particle.getBallVelocityY());
+        logger.debug("----- Horizontal Wall Collision ------");
+        logger.debug("particle {}", particle.getId());
+        logger.debug("velocity {}", particle.getBallVelocityY());
+        logger.debug("initial position {}", particle.getBallPositionY());
+        logger.debug("final position {}", finalPosition);
+        logger.debug("time {}",time);
+        logger.debug("-----------");
+        return new Collision(time, particle.getId(), Wall.HORIZONTAL);
+    }
+
+
+    /**
+     * Auxiliary function to calculate if particle is at height of opening of boxB.
+     *
+     * @param time     time
+     * @param velocity particle velocity
+     * @return if the particle, at that time, will reach opening height of boxB
+     */
+    private boolean atOpeningHeight(double y0, double time, double velocity) {
+        double yf = y0 + velocity * time;
+        return yf >= bottomWallB + ballRadius && yf <= topWallB - ballRadius;
+    }
+
+
+    /**
+     * Function that calculates the time it takes for a particle to collide with vertical walls.
+     * If the particle collides with the border wall at height of the opening of boxB then
+     * the collision is discarded, since it's not a real collision.
+     * todo:if i have x < width but the particle has a little bit of itself in box B, is
+     *      it in box A or in box B? --> usa el centro de la particula como referencia para eso ?:P
+     *
+     *
+     *
+     * @param particle describes the particle to study
+     * @return the new Collision item set to the corresponding wall
+     */
+    private Collision timeToVerticalWall(Particle particle) {
+        double finalPosition;
+        double x = particle.getBallPositionX();
+        boolean inBoxA = x < width;
+
+        if (particle.getBallVelocityX() > 0) {
+            double rightWall = inBoxA ? width : width * 2;
+            finalPosition = rightWall - ballRadius;
+        } else {
+            double leftWall = inBoxA ? 0 : width;
+            finalPosition = leftWall + ballRadius;
+        }
+
+        double time = timeToPosition(x, finalPosition, particle.getBallVelocityX());
+        logger.debug("----- Vertical Wall Collision ------");
+        logger.debug("particle {}", particle.getId());
+        logger.debug("velocity {}", particle.getBallVelocityX());
+        logger.debug("initial position {}", particle.getBallPositionX());
+        logger.debug("final position {}", finalPosition);
+        logger.debug("time {}",time);
+        logger.debug("-----------");
+        boolean atOpeningHeight = atOpeningHeight(particle.getBallPositionY(), time, particle.getBallVelocityY());
+
+        if (atOpeningHeight && ((particle.getBallVelocityX() > 0 && inBoxA) || (particle.getBallVelocityX() < 0 && !inBoxA))) {
+            return null;
+        }
+
+        return new Collision(time, particle.getId(), Wall.VERTICAL);
+    }
+
+    /**
+     * Generic function for calculating time taken to reach certain position
+     *
+     * @param initialPosition describes the starting point of the object.
+     * @param finalPosition   describes the final destination of the object.
+     * @param velocity        describes the velocity of the object.
+     * @return time it takes to reach the destination
+     */
+    private double timeToPosition(double initialPosition, double finalPosition, double velocity) {
+        return (finalPosition - initialPosition) / velocity;
+    }
+
+    /* ----------------------- Helper Functions ----------------------- */
 
     public double randomDistanceNumber(double min, double max) {
         double diff = max - min;
@@ -92,301 +312,6 @@ public class Simulation {
 
     }
 
-    /**
-     * Generic function for calculating time taken to reach certain position
-     *
-     * @param initialPosition describes the starting point of the object.
-     * @param finalPosition   describes the final destination of the object.
-     * @param velocity        describes the velocity of the object.
-     * @return time it takes to reach the destination
-     */
-    private double timeToPosition(double initialPosition, double finalPosition, double velocity) {
-        return (finalPosition - initialPosition) / velocity;
-    }
-
-
-    private void calculateParticleCollisions(Particle particle) {
-
-        // Collisions with walls
-        Collision collisionV = VerticalWallCollision(particle);
-        Collision collisionH = HorizontalWallCollision(particle);
-
-        if (collisionV.getTime() >= collisionH.getTime()) {
-            particle.addCollision(collisionH);
-        } else {
-            particle.addCollision(collisionV);
-        }
-        /* TODO: uncomment to enable particle collisions
-        for (Particle other : particles) {
-            if (other != particle) {
-                collision = calculateParticlesCollision(particle, other);
-                if (collision != null) {
-                    particle.addCollision(collision);
-                    other.addCollision(collision);
-                }
-            }
-        }*/
-    }
-
-    /**
-     * Function that calculates the time it takes for a particle to collide with Horizontal walls.
-     *
-     * @param particle describes the particle to study
-     * @return the new Collision item set to the corresponding wall
-     */
-    private Collision HorizontalWallCollision(Particle particle) {
-        double y = particle.getBallPositionY();
-        double finalPosition;
-
-        if (particle.getBallVelocityY() > 0) {
-            double topWall = particle.getBallPositionX() < width ? heightFirstBox : topWallB;
-            finalPosition = topWall - ballRadius;
-        } else {
-            double bottomWall = particle.getBallPositionX() < width ? 0 : bottomWallB;
-            finalPosition = bottomWall + ballRadius;
-        }
-        double time = timeToPosition(y, finalPosition, particle.getBallVelocityY());
-        logger.debug("----- Horizontal Wall Collision ------");
-        logger.debug("particle {}", particle.getId());
-        logger.debug("velocity {}", particle.getBallVelocityY());
-        logger.debug("initial position {}", particle.getBallPositionY());
-        logger.debug("final position {}", finalPosition);
-        logger.debug("time {}",time);
-        logger.debug("-----------");
-        return new Collision(time, particle.getId(), Wall.HORIZONTAL);
-    }
-
-
-    /**
-     * Auxiliary function to calculate if particle is at height of opening of boxB.
-     *
-     * @param time     time
-     * @param velocity particle velocity
-     * @return if the particle, at that time, will reach opening height of boxB
-     */
-    private boolean atOpeningHeight(double y0, double time, double velocity) {
-        double yf = y0 + velocity * time;
-        return yf >= bottomWallB + ballRadius && yf <= topWallB - ballRadius;
-    }
-
-
-    /**
-     * Function that calculates the time it takes for a particle to collide with vertical walls.
-     * If the particle collides with the border wall at height of the opening of boxB then
-     * the collision is discarded, since it's not a real collision.
-     *
-     *
-     * todo:if i have x < width but the particle has a little bit of itself in box B, is
-     *      it in box A or in box B?
-     *
-     *
-     *
-     * @param particle describes the particle to study
-     * @return the new Collision item set to the corresponding wall
-     */
-    private Collision VerticalWallCollision(Particle particle) {
-        double finalPosition;
-        double x = particle.getBallPositionX();
-        boolean inBoxA = x < width;
-
-        if (particle.getBallVelocityX() > 0) {
-            double rightWall = inBoxA ? width : width * 2;
-            finalPosition = rightWall - ballRadius;
-        } else {
-            double leftWall = inBoxA ? 0 : width;
-            finalPosition = leftWall + ballRadius;
-        }
-
-        double time = timeToPosition(x, finalPosition, particle.getBallVelocityX());
-        logger.debug("----- Vertical Wall Collision ------");
-        logger.debug("particle {}", particle.getId());
-        logger.debug("velocity {}", particle.getBallVelocityX());
-        logger.debug("initial position {}", particle.getBallPositionX());
-        logger.debug("final position {}", finalPosition);
-        logger.debug("time {}",time);
-        logger.debug("-----------");
-        boolean atOpeningHeight = atOpeningHeight(particle.getBallPositionY(), time, particle.getBallVelocityY());
-
-        if (atOpeningHeight && ((particle.getBallVelocityX() > 0 && inBoxA) || (particle.getBallVelocityX() < 0 && !inBoxA))) {
-            return null;
-        }
-
-        return new Collision(time, particle.getId(), Wall.VERTICAL);
-    }
-
-    /**
-     * Calculates ∆v∆r
-     * @param dv is ∆v = (∆vx, ∆vy)
-     * @param dr is ∆r = (∆rx, ∆ry)
-     * @return product
-     */
-    private double calculateDvDr(double[] dv, double[] dr) {
-        return (dv[0]* dr[0] + dv[1] * dr[1]);
-    }
-
-    /**
-     * Calculates particles collision
-     * @param p1 first particle
-     * @param p2 second particle
-     * @return Collision between said particles
-     */
-
-    //TODO: check calculation of time, giving negative values
-    private Collision calculateCollisionBetweenParticles(Particle p1, Particle p2) {
-        // Logic for mass collision detection and response goes here
-
-        double time = 0;
-        // ∆v = (∆vx, ∆vy)
-        double[] dv = {0,0};
-        dv[0] = p2.getBallVelocityX() - p1.getBallPositionX();
-        dv[1] = p2.getBallPositionY() - p1.getBallPositionY();
-        // ∆r = (∆rx, ∆ry)
-        double[] dr = {0,0};
-        dr[0] = p2.getBallPositionX() - p1.getBallPositionX();
-        dr[1] = p2.getBallPositionY() - p1.getBallPositionY();
-
-        double calc = (dv[0]* dr[0] + dv[1] * dr[1]);
-        double dvdv = Math.pow(dv[0], 2.0) + Math.pow(dv[1], 2.0);
-        double drdr = Math.pow(dr[0], 2.0) + Math.pow(dr[1], 2.0);
-        double o = p1.getBallRadius() + p2.getBallRadius();
-        double d = Math.pow(calc,2.0) - ( dvdv * (drdr - o) );
-
-        // slide 14
-        if ( calc >= 0 || d < 0){
-            return null;
-        }
-        time = -(calc + Math.sqrt(d))/ dvdv;
-        logger.debug("time: {}", time);
-
-        return new Collision(time, p1.getId(), p2.getId(), null);
-    }
-
-    /**
-     * Calculates all collisions for all particles
-     */
-    private void calculateInitialCollisions() {
-        for (Particle p1 : particles) {
-            calculateParticleCollisions(p1);
-        }
-    }
-
-
-    /**
-     * Finds the first collision that will occur
-     *
-     * @return collision that will first occur
-     */
-    private Collision firstCollision() {
-        Collision collisionToOccur = particles.getFirst().getNextCollision();
-
-        for (int i = 1; i < particles.size(); i++) {
-            Collision collision = particles.get(i).getNextCollision();
-            if ( collision != null && collisionToOccur != null && collision.getTime() < collisionToOccur.getTime()) {
-                collisionToOccur = collision;
-            }
-        }
-        return collisionToOccur;
-    }
-
-
-    private void updatePositions(double time) {
-        for (Particle particle : particles) {
-            double newX = particle.getBallPositionX() + particle.getBallVelocityX() * time;
-            double newY = particle.getBallPositionY() + particle.getBallVelocityY() * time;
-            particle.setBallPosition(newX, newY);
-
-            // update collision times
-            for (Collision collision : particle.getCollisions()) {
-                collision.setTime(collision.getTime() - time);
-            }
-
-        }
-    }
-
-    /**
-     * Given a particle id and its collisions, removes mirror collision from the collision list of the other particle
-     * Example:
-     *          If A's collision List looks like (B, C, Wall), then for B and C remove collision with A
-     *
-     * @param collisions particle id collision list
-     * @param id id of particle
-     */
-    private void removeOtherParticleCollisions(PriorityQueue<Collision> collisions, int id) {
-        for (Collision collision : collisions) {
-            if (collision.getWall() == null) {
-                Particle particleB = particles.get(collision.getParticleB());
-                particleB.getCollisions().removeIf((col) -> col.getParticleB() == id);
-            }
-        }
-    }
-
-
-    /**
-     * Function that makes collision with a wall happen:
-     * - updates particle velocity vector
-     * - recalculates particle collision list
-     *
-     * @param particle given particle
-     * @param wall collision wall
-     */
-    private void makeWallCollision(Particle particle, Wall wall, double time) {
-
-        removeOtherParticleCollisions(particle.getCollisions(), particle.getId());
-        particle.clearCollisions();
-        updatePositions(time);
-        // update velocities
-        if (wall == Wall.HORIZONTAL) {
-            particle.setBallVelocity(particle.getBallVelocityX(), -particle.getBallVelocityY());
-
-        } else if (wall == Wall.VERTICAL) {
-            particle.setBallVelocity(-particle.getBallVelocityX(), particle.getBallVelocityY());
-        } else {
-            logger.error("Invalid Wall Collision");
-        }
-        calculateParticleCollisions(particle);
-    }
-
-    // must also recalculate particles collisions
-    private void makeParticleCollision(Particle particleA, Particle particleB, double time) {
-
-        removeOtherParticleCollisions(particleA.getCollisions(), particleA.getId());
-        removeOtherParticleCollisions(particleB.getCollisions(), particleB.getId());
-
-        // Assuming that when a particle collides with the wall there are no particles to update
-        particleA.clearCollisions();
-        particleB.clearCollisions();
-    }
-
-    /**
-     *  Function that makes general collision happen:
-     *  - searches for the first collision that will occur among all collisions
-     *  - updates all particle positions -> new system state given new system time
-     *  - updates particle (or particles) velocity and collision list given such collision
-     */
-    private void makeCollision() {
-
-        Collision nextCollision = firstCollision();
-
-        if(nextCollision == null){
-            return;
-        }
-
-        // updates system total time and particle state
-        totalTime += nextCollision.getTime();
-        logger.debug("Current time: {}", totalTime);
-
-        // Updates particle velocity and collision list
-        Particle particleA = particles.get(nextCollision.getParticleA());
-
-        if (nextCollision.getWall() != null) {
-            makeWallCollision(particleA, nextCollision.getWall(), nextCollision.getTime());
-
-        } else {
-            // TODO: comment to view functionality of the wall collisions
-            //makeParticleCollision(particleA, nextCollision.getParticleB(), nextCollision.getTime());
-        }
-    }
-
     private void initializeSystem() {
         for (int i = 0; i < particlesCount; i++) {
             double ballPositionX;
@@ -418,31 +343,15 @@ public class Simulation {
         }
     }
 
-
-    private double calculateCollisionPressure(Particle p){
-        return 0;
-    }
-
-    public void runSimulation(int times, String filepath) {
-
-        logger.info("Starting simulation with {} particles and box height {}", particlesCount, heightSecondBox);
-        // initialize particles
-        initializeSystem();
-        logger.info("Initialized system with {} particles", particlesCount);
-        saveSimulationState(filepath, true);
-
-        logger.info("Collision number: 0");
-        calculateInitialCollisions();
-        logger.info("Calculated initial collisions");
-
-        // iteration of collisions
-        int current = 1;
-        while (current++ < times) {
-            logger.info("***********************");
-            logger.info("Collision number: {}", current);
-            makeCollision();
-            logger.info("***********************");
-            saveSimulationState(filepath, false);
-        }
-    }
 }
+
+/**
+ *
+ * getNextEvent
+ * advnace
+ * handle collision
+ * save state
+ *
+ *
+ *
+ */

@@ -6,12 +6,20 @@ public class Collision implements Comparable<Collision> {
     private int particleA = -1; // Main Particle id
     private int particleB = -1; // Collision with id
     private final Wall wall;
+    private boolean isTrueCollision = true;
 
     public Collision(double time, int particleA, int particleB, Wall wall) {
         this.time = time;
         this.particleA = particleA;
         this.particleB = particleB;
         this.wall = wall;
+    }
+
+    public Collision(double time, int particleA, Wall wall, boolean isTrueCollision) {
+        this.time = time;
+        this.particleA = particleA;
+        this.wall = wall;
+        this.isTrueCollision = isTrueCollision;
     }
 
     public Collision(double time, int particleA, Wall wall) {
@@ -32,6 +40,10 @@ public class Collision implements Comparable<Collision> {
 
     public int getParticleB() {
         return particleB;
+    }
+
+    public boolean isTrueCollision() {
+        return isTrueCollision;
     }
 
     public Wall getWall() {
