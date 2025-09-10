@@ -79,7 +79,7 @@ class PressureDiffusionApp(tk.Tk):
             return
 
         for file in self.files:
-            animate(file)
+            animate(file, save_as="animation.mp4")
 
 if __name__ == "__main__":
     app = PressureDiffusionApp()

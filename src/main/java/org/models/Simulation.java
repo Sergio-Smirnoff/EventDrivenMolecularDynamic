@@ -15,26 +15,27 @@ import org.slf4j.LoggerFactory;
 
 public class Simulation {
 
-    private final double heightFirstBox = 0.09;
-    private final double width = 0.09;
+    private final double scale = 100000;
+    private final double heightFirstBox = 0.09 * scale;
+    private final double width = 0.09 * scale;
     private final double heightSecondBox;
     private final double topWallB;
     private final double bottomWallB;
 
     private final Logger logger = LoggerFactory.getLogger(Simulation.class);
 
-    private final double ballVelocity = 0.01; // in m/s
-    private final double ballRadius = 0.0015; // meters
+    private final double ballVelocity = 0.01 * scale; // in m/s
+    private final double ballRadius = 0.0015 * scale; // meters
 
     private final int particlesCount;
     private double totalTime = 0; // in seconds
     private final List<Particle> particles;
 
     public Simulation(double heightSecondBox, int particlesCount) {
-        this.heightSecondBox = heightSecondBox;
+        this.heightSecondBox = heightSecondBox* scale;
         this.particlesCount = particlesCount;
-        this.topWallB = (heightFirstBox + heightSecondBox) / 2;
-        this.bottomWallB = (heightFirstBox - heightSecondBox) / 2;
+        this.topWallB = (heightFirstBox + heightSecondBox* scale) / 2;
+        this.bottomWallB = (heightFirstBox - heightSecondBox* scale) / 2;
         this.particles = new ArrayList<>(particlesCount);
     }
 
@@ -54,6 +55,7 @@ public class Simulation {
 
             // 1. Find the very next event in the entire system.
             Collision nextEvent = findNextEvent();
+            
             if (nextEvent == null || nextEvent.getTime() == Double.POSITIVE_INFINITY) {
                 logger.warn("No more collisions can be predicted. Ending simulation.");
                 break;
