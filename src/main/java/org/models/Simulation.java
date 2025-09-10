@@ -137,6 +137,12 @@ public class Simulation {
     /* ----------------------- Collision Functions ----------------------- */
 
     // ojo con getParticleB porque no se si sería esa la partícula a chequear, depende de como se guarde la colisión espejada
+
+    /**
+     * Cleans given particle collisions.
+     * If Particle A collides with B, C and a wall, it removes the A-B and A-C collision from B´s and C's list respectively
+     * @param collidingParticle given particle to remove collisions
+     */
     private void cleanCollisions(Particle collidingParticle){
         PriorityQueue<Collision> collisions = collidingParticle.getCollisions();
         for (Collision collision : collisions) {
@@ -149,6 +155,13 @@ public class Simulation {
     }
 
     // CHEQUEEAAAARRRR PORQUE ES SOLO PARA EL CASO QUE AMBAS TENGAN LA MISMA ALTURA
+
+    /**
+     * Given a particle that collides with a wall, or to the invisible wall, corrects
+     * the value to avoid things like y = 0.00150000000000002 or y = 0.001499999999999999999996
+     * @param p particle which collides
+     * @param wall wall to which the particle collides
+     */
     private void snapToWall(Particle p, Wall wall){
         if(wall == Wall.VERTICAL){
             double newX = (p.getBallVelocityX() > 0) ?
@@ -165,6 +178,11 @@ public class Simulation {
         }
     }
 
+    /**
+     * Updates velocities of collidint particle depending on wall collision
+     * @param p colliding particle
+     * @param w colliding wall
+     */
     private void handleWallBounce(Particle p, Wall w){
         if (w.equals(Wall.VERTICAL)) {
             p.setBallVelocity(-p.getBallVelocityX(), p.getBallVelocityY());
@@ -173,6 +191,12 @@ public class Simulation {
         }
     }
 
+    /**
+     * Resolves occurring collision. Analyses if wall collision or particle collision occur.
+     * If particle collides with invisible wall, it only recalculates collision since particle
+     * changes environment.
+     * @param collision occuring collision
+     */
     private void resolveCollision(Collision collision) {
         Particle particleA = particles.get(collision.getParticleA());
         if(collision.getWall() != null){
@@ -187,7 +211,7 @@ public class Simulation {
     }
 
     /**
-     * Calculates all collisions for all particles
+     * Calculates all initial collisions for all particles
      */
     private void calculateInitialCollisions() {
         for (Particle p1 : particles) {
@@ -196,7 +220,7 @@ public class Simulation {
     }
 
     /**
-     * Calculates collisions for particle
+     * Calculates collisions for said particle
      * @param particle particle
      */
     private void calculateParticleCollisions(Particle particle) {
