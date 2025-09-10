@@ -41,10 +41,12 @@ public class Simulation {
     /* ----------------------- Main Simulation Loop Functions ----------------------- */
 
     public void runSimulation(int maxIterations, String filepath){
-        logger.info("Starting Simulation wit");
+        logger.info("Starting Simulation with {}", particlesCount);
         initializeSystem();
-        saveSimulationState(filepath, true);
+        saveSimulationState(filepath, true, new ArrayList<>()); // save initial state
         calculateInitialCollisions();
+
+        List<Particle> collisionedParticles = new ArrayList<>();
 
         for (int collisionCount = 1; collisionCount <= maxIterations; collisionCount++) {
             logger.info("***********************");
@@ -70,7 +72,18 @@ public class Simulation {
             // 4. Resolve the collision and re-predict futures for involved particles.
             resolveCollision(nextEvent);
 
-            saveSimulationState(filepath, false);
+            // 5. Save the state of the system.
+
+
+            if ( nextEvent.getParticleA() >= 0 && nextEvent.getParticleA() < particlesCount ) {
+                collisionedParticles.add(particles.get(nextEvent.getParticleA()));
+            }
+            if ( nextEvent.getParticleB() >= 0 && nextEvent.getParticleB() < particlesCount ) {
+                collisionedParticles.add(particles.get(nextEvent.getParticleB()));
+            }
+
+            saveSimulationState(filepath, false, collisionedParticles);
+            collisionedParticles.clear();
         }
     }
 
@@ -351,7 +364,7 @@ public class Simulation {
      * Locale.setDefault(Locale.US); for writing the decimals with comma
      */
 
-    private void saveSimulationState(String filePath, boolean printHeaders) {
+    private void saveSimulationState(String filePath, boolean printHeaders, List<Particle> particlesToSave) {
         // Logic to save the simulation state to a file
         Locale.setDefault(Locale.US);
         try (PrintWriter writer = new PrintWriter(new FileWriter(filePath, !printHeaders))) { // append mode if not printing headers
@@ -360,7 +373,13 @@ public class Simulation {
                 writer.println("N: " + particlesCount);
                 writer.println("L: " + heightSecondBox);
             }
-            writer.printf("%g;\n", totalTime); // fix with pressure
+            writer.printf("%g;", totalTime); // fix with pressure
+            
+            for (Particle p : particlesToSave) {
+                writer.printf("%d;", p.getId());
+            }
+
+            writer.printf("\n");
 
             // Write particle data
             writer.printf("positionX;positionY;velocityX;velocityY\n");
