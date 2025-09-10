@@ -96,6 +96,8 @@ def plot_presiones_vs_t(filename, interval=0.8):
 
     plt.plot(tiempos, P_A_list, label="Caja A")
     plt.plot(tiempos, P_B_list, label="Caja B")
+    plt.xscale('log')
+    plt.yscale('log')
     plt.xlabel("Tiempo [s]")
     plt.ylabel("Presión [Pa]")
     plt.legend()
@@ -111,6 +113,8 @@ def presion_promedio(P_A_list, P_B_list):
     return pA_mean, pB_mean
 
 def plot_presion_vs_L(L_values, P_means_A, P_means_B):
+    plt.xscale('log')
+    plt.yscale('log')
     plt.scatter(L_values, P_means_A, label="Caja A")
     plt.scatter(L_values, P_means_B, label="Caja B")
     plt.xlabel("Longitud L [m]")
@@ -139,6 +143,8 @@ def presion_vs_area(files):
 
     P_means, A_inv = np.array(P_means), np.array(A_inv)
 
+    plt.xscale('log')
+    plt.yscale('log')
     plt.scatter(A_inv, P_means, label="Datos simulación")
     plt.xlabel("1/Área [1/m²]")
     plt.ylabel("Presión promedio [Pa]")
@@ -158,6 +164,8 @@ def ajuste_presion_vs_area(A_inv, P_means):
     A_inv_fit = np.linspace(min(A_inv), max(A_inv), 100)
     P_fit = modelo(A_inv_fit, c)
 
+    plt.xscale('log')
+    plt.yscale('log')
     plt.scatter(A_inv, P_means, label="Datos simulación")
     plt.plot(A_inv_fit, P_fit, "--", label=f"Ajuste P = c/A, c={c:.3e}")
     plt.xlabel("1/Área [1/m²]")
@@ -189,6 +197,8 @@ def difusion(filename):
     D = popt[0]
     print(f"Coeficiente de difusión D ≈ {D:.6e} m²/s")
 
+    plt.xscale('log')
+    plt.yscale('log')
     plt.plot(tiempos, msd, label="MSD")
     plt.plot(tiempos, modelo_diff(tiempos, D),
              "--", label=f"Ajuste lineal (D={D:.4e})")
