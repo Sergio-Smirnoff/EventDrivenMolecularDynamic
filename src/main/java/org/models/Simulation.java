@@ -137,6 +137,10 @@ public class Simulation {
         for (Particle p : particles) {
             double newX = p.getBallPositionX() + p.getBallVelocityX() * timeSkip;
             double newY = p.getBallPositionY() + p.getBallVelocityY() * timeSkip;
+            if(isBeyondLimits(newX, newY)){
+                logger.info("particle {} is off limits for time {}", p.getId(), timeSkip);
+                logger.info("position x: {}      position y: {}", newX, newY);
+            }
             p.setBallPosition(newX, newY);
             for (Collision c : p.getCollisions()) {
                 c.setTime(c.getTime() - timeSkip);
@@ -251,6 +255,7 @@ public class Simulation {
     private void resolveCollision(Collision collision) {
         Particle particleA = particles.get(collision.getParticleA());
         if(collision.getWall() != null){
+            snapToWall(particleA, collision.getWall());
             if(collision.isTrueCollision()){
                 if ( collision.getParticleB() != -1 && collision.getWall() == null ) {
                     handleParticleCollision(particleA, particles.get(collision.getParticleB()));
@@ -261,6 +266,7 @@ public class Simulation {
                     logger.error("Collision with wall has invalid particleA id: {}. Ignoring collision.", collision.getParticleA());
                     return;
                 }
+
             }else{
                 logger.info("False Collision between particle {} to vertical wall at y={} and x={}", particleA.getId(), particleA.getBallPositionY(), particleA.getBallPositionX());
             }

@@ -9,7 +9,7 @@ public class Main {
         int particlesCount = 250;
 
         Simulation simulation = new Simulation(heightSecondBox, particlesCount);
-        simulation.runSimulation(100, "initial_state.csv");
+        simulation.runSimulation(1000, "initial_state.csv");
     }
 
 }

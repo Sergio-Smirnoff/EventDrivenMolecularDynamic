@@ -51,9 +51,8 @@ def animate(filename, save_as=None, print_data=False, print_first_k=5):
         return scat,
 
     def update(frame):
-        time, particles = frame
+        time, _, particles = frame
         coords = [(float(p.x), float(p.y)) for p in particles]
-        # Only update the scatter plot's data
         scat.set_offsets(coords)
 
         if print_data:
@@ -65,7 +64,6 @@ def animate(filename, save_as=None, print_data=False, print_first_k=5):
 
         return scat,
 
-    # blit=True is now reliable because nothing else in the plot is changing.
     ani = FuncAnimation(fig, update, frames=frames, init_func=init,
                         blit=True, interval=20)
 
