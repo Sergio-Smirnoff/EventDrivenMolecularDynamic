@@ -210,7 +210,6 @@ def difusion(filename):
 
 
 if __name__ == "__main__":
-    
     files = ["./test-data/initial_state_0.03.csv",
     "./test-data/initial_state_0.05.csv",
     "./test-data/initial_state_0.06.csv",
