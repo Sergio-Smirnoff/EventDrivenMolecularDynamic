@@ -11,14 +11,12 @@ class PressureDiffusionApp(tk.Tk):
 
         self.files = []
 
-        # File selection
         self.file_label = tk.Label(self, text="No files selected")
         self.file_label.pack(pady=10)
 
         self.select_btn = tk.Button(self, text="Seleccionar archivos CSV", command=self.select_files)
         self.select_btn.pack(pady=5)
 
-        # Interval input
         interval_frame = tk.Frame(self)
         interval_frame.pack(pady=10)
         tk.Label(interval_frame, text="Intervalo (s): ").pack(side=tk.LEFT)
@@ -26,7 +24,6 @@ class PressureDiffusionApp(tk.Tk):
         self.interval_entry.insert(0, "0.8")
         self.interval_entry.pack(side=tk.LEFT)
 
-        # Analysis buttons
         self.pressure_btn = tk.Button(self, text="Graficar presión vs tiempo", command=self.run_pressure)
         self.pressure_btn.pack(pady=5)
 
@@ -36,7 +33,6 @@ class PressureDiffusionApp(tk.Tk):
         self.diffusion_btn = tk.Button(self, text="Calcular difusión (MSD)", command=self.run_diffusion)
         self.diffusion_btn.pack(pady=5)
 
-        # Animation button
         self.animation_btn = tk.Button(self, text="Ejecutar animación", command=self.run_animation)
         self.animation_btn.pack(pady=10)
 
