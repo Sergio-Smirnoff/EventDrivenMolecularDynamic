@@ -1,15 +1,19 @@
 package org.simulation;
 
+import java.util.Locale;
+
 import org.models.Simulation;
 
 public class Main {
 
     public static void main(String[] args) {
-        double heightSecondBox = 0.06;
+        Locale.setDefault(Locale.US);
+        
+        double heightSecondBox = 0.09;
         int particlesCount = 250;
 
         Simulation simulation = new Simulation(heightSecondBox, particlesCount);
-        simulation.runSimulation(1000, "initial_state.csv");
+        simulation.runSimulation(10000, String.format("initial_state_%.2f.csv", heightSecondBox));
     }
 
 }

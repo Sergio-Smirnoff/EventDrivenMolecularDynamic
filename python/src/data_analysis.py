@@ -205,8 +205,20 @@ def difusion(filename):
 
 
 if __name__ == "__main__":
-    #t, P_A_list, P_B_list = presiones_vs_t("./test-data/initial_state.csv")
-    #presion_promedio("./test-data/initial_state.csv", P_A_list, P_B_list)
-    #plot_presiones_vs_t("./test-data/initial_state.csv")
-    A_inv, P_means = presion_vs_area(["./test-data/initial_state.csv"])
+    
+    files = ["./test-data/initial_state_0.03.csv",
+    "./test-data/initial_state_0.05.csv",
+    "./test-data/initial_state_0.06.csv",
+    "./test-data/initial_state_0.07.csv",
+    "./test-data/initial_state_0.08.csv",
+    "./test-data/initial_state_0.09.csv"]
+
+    for file in files:
+        plot_presiones_vs_t(file)
+
+    A_inv, P_means = presion_vs_area(files)
     ajuste_presion_vs_area(A_inv, P_means)
+
+    difusion("./test-data/initial_state_0.05.csv")
+    
+
