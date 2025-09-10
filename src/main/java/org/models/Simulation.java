@@ -179,11 +179,10 @@ public class Simulation {
             if(collision.isTrueCollision()){
                 snapToWall(particleA, collision.getWall());
                 handleWallBounce(particleA, collision.getWall());
-                calculateParticleCollisions(particleA);
             }else{
                 logger.info("False Collision between particle {} to vertical wall at y={} and x={}", particleA.getId(), particleA.getBallPositionY(), particleA.getBallPositionX());
-                cleanCollisions(particleA);
             }
+            calculateParticleCollisions(particleA);
         }
     }
 
@@ -264,13 +263,14 @@ public class Simulation {
     private Collision timeToVerticalWall(Particle particle) {
         double finalPosition;
         double x = particle.getBallPositionX();
-        boolean inBoxA = x < width;
+        boolean inBoxA = x < width - ballRadius;
+        boolean inBoxB = x > width + ballRadius;
 
         if (particle.getBallVelocityX() > 0) {
             double rightWall = inBoxA ? width : width * 2;
             finalPosition = rightWall - ballRadius;
         } else {
-            double leftWall = inBoxA ? 0 : width;
+            double leftWall = inBoxB ? width : 0;
             finalPosition = leftWall + ballRadius;
         }
 
