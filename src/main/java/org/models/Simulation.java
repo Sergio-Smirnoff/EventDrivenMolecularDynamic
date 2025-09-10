@@ -57,8 +57,15 @@ public class Simulation {
                 break;
             }
 
+            logger.info(" ");
+            logger.info("colliding time {}", nextEvent.getTime());
+            logger.info("colliding particle {}", nextEvent.getParticleA());
+            logger.info("collision {}", nextEvent.isTrueCollision() ? "true":"false");
+            logger.info(" ");
+
             // 3. Advance the system to the time of that event.
-            advanceSystem(nextEvent.getTime());
+            if(!advanceSystem(nextEvent.getTime()))
+                return;
 
             // 4. Resolve the collision and re-predict futures for involved particles.
             resolveCollision(nextEvent);
@@ -86,22 +93,36 @@ public class Simulation {
     }
 
     /**
+     *      DEBUGGING
+     * Calculates if particle is beyond possible limits, only for heightFirstBox=heightSecondBox
+     *
+     *
+     * ? (x > (width - ballRadius) && x < (width + ballRadius))
+     * @param x
+     * @param y
+     * @return
+     */
+    private boolean isBeyondLimits(double x, double y){
+        boolean toReturn = x < ballRadius || x > ( 2 * width - ballRadius);
+        toReturn |= y > (heightFirstBox - ballRadius) || y < ballRadius;
+        return toReturn;
+    }
+
+    /**
      * Advances the system to the next event
      *
      * @param timeSkip Time to be fast forwarded
      */
-    private void advanceSystem(double timeSkip){
+    private boolean advanceSystem(double timeSkip){
         if(timeSkip < 0){
             logger.warn("Attempted to advance time by a negative value: {}. OJO.", timeSkip);
-            return;
+            return false;
         }
 
         for (Particle p : particles) {
-            p.setBallPosition(
-                    p.getBallPositionX() + p.getBallVelocityX() * timeSkip,
-                    p.getBallPositionY() + p.getBallVelocityY() * timeSkip
-            );
-            // Decrement the time for all pending collisions for this particle.
+            double newX = p.getBallPositionX() + p.getBallVelocityX() * timeSkip;
+            double newY = p.getBallPositionY() + p.getBallVelocityY() * timeSkip;
+            p.setBallPosition(newX, newY);
             for (Collision c : p.getCollisions()) {
                 c.setTime(c.getTime() - timeSkip);
             }
@@ -109,6 +130,7 @@ public class Simulation {
 
         totalTime += timeSkip;
         logger.debug("Advanced time by {}. Total time: {}", timeSkip, totalTime);
+        return true;
     }
 
 
@@ -126,6 +148,23 @@ public class Simulation {
         collidingParticle.clearCollisions();
     }
 
+    // CHEQUEEAAAARRRR PORQUE ES SOLO PARA EL CASO QUE AMBAS TENGAN LA MISMA ALTURA
+    private void snapToWall(Particle p, Wall wall){
+        if(wall == Wall.VERTICAL){
+            double newX = (p.getBallVelocityX() > 0) ?
+                    (p.getBallPositionX() < width ? width - ballRadius : 2 * width - ballRadius) :
+                    (p.getBallPositionX() < width ? ballRadius : width + ballRadius);
+            p.setBallPosition(newX, p.getBallPositionY());
+            logger.info("Colliding particle {} to vertical wall at x={}", p.getId(), newX);
+        }else{
+            double newY = (p.getBallVelocityY() > 0) ?
+                    (p.getBallPositionX() < width ? heightFirstBox - ballRadius : topWallB - ballRadius) :
+                    (p.getBallPositionX() < width ? ballRadius : bottomWallB + ballRadius);
+            p.setBallPosition(p.getBallPositionX(), newY);
+            logger.info("Colliding particle {} to horizontal wall at y={}", p.getId(), newY);
+        }
+    }
+
     private void handleWallBounce(Particle p, Wall w){
         if (w.equals(Wall.VERTICAL)) {
             p.setBallVelocity(-p.getBallVelocityX(), p.getBallVelocityY());
@@ -138,10 +177,13 @@ public class Simulation {
         Particle particleA = particles.get(collision.getParticleA());
         if(collision.getWall() != null){
             if(collision.isTrueCollision()){
+                snapToWall(particleA, collision.getWall());
                 handleWallBounce(particleA, collision.getWall());
                 calculateParticleCollisions(particleA);
+            }else{
+                logger.info("False Collision between particle {} to vertical wall at y={} and x={}", particleA.getId(), particleA.getBallPositionY(), particleA.getBallPositionX());
+                cleanCollisions(particleA);
             }
-            // recalcular colisiones para la primer partícula
         }
     }
 

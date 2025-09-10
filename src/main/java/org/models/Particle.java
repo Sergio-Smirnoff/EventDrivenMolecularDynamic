@@ -43,10 +43,6 @@ public class Particle {
         return !collisions.isEmpty();
     }
 
-    public boolean isBoxA(){
-        return ballPositionX > 0.09;
-    }
-
     /* ------------------------ Getters  ------------------------ */
 
     public int getId(){
