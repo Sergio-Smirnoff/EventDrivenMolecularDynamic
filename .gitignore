@@ -25,5 +25,8 @@ replay_pid*
 
 .vscode
 .idea
+*.iml
+*.mp4
+*.csv
 __pycache__/
 target/
