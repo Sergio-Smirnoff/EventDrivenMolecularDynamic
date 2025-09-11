@@ -103,6 +103,7 @@ public class Simulation {
             if (!p.hasCollisions()) continue;
             Collision earliestForP = p.getNextCollision();
             if (nextEvent == null || earliestForP.getTime() < nextEvent.getTime()) {
+                logger.debug("Found new next event for particle {}: time {}", p.getId(), earliestForP.getTime());
                 nextEvent = earliestForP;
             }
         }
@@ -126,6 +127,8 @@ public class Simulation {
             double newY = p.getBallPositionY() + p.getBallVelocityY() * timeSkip;
             p.setBallPosition(newX, newY);
             for (Collision c : p.getCollisions()) {
+                logger.debug("Advancing particle {}: particle time {} - time skip {}", p.getId(), c.getTime(), timeSkip);
+
                 c.setTime(c.getTime() - timeSkip);
             }
         }
@@ -306,7 +309,7 @@ public class Simulation {
             double dx = other.getBallPositionX() - particle.getBallPositionX();
             double dy = other.getBallPositionY() - particle.getBallPositionY();
             double distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance < 2 * ballRadius) {
+            if (distance <= 2 * ballRadius) {
                 double time = timeToCollision(particle, other);
                 logger.debug("Predicted collision between particle {} and {} in time {}", particle.getId(), other.getId(), time);
                 if (time != Double.POSITIVE_INFINITY && time >= 0) {
@@ -353,6 +356,8 @@ public class Simulation {
 
         double sqrtD = Math.sqrt(d);
 
+
+        // TODO:chequear 
         // logger.debug("Discriminant: {} and sqrtD: {}", d, sqrtD);
         double t1 = (-dvdr - sqrtD) / dvdv;
         double t2 = (-dvdr + sqrtD) / dvdv;
@@ -554,7 +559,7 @@ public class Simulation {
                     double dy = ballPositionY - other.getBallPositionY();
                     double distance = Math.sqrt(dx * dx + dy * dy);
 
-                    if (distance < 2 * ballRadius) {
+                    if (distance <= 2 * ballRadius) {
                         overlaps = true;
                         break; 
                     }

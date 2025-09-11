@@ -9,7 +9,7 @@ public class Main {
     public static void main(String[] args) {
         Locale.setDefault(Locale.US);
 
-        double heightSecondBox = 0.07;
+        double heightSecondBox = 0.03;
         int particlesCount = 250;
 
         Simulation simulation = new Simulation(heightSecondBox, particlesCount);
