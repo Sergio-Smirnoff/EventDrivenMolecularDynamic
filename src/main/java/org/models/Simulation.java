@@ -16,16 +16,16 @@ import org.slf4j.LoggerFactory;
 public class Simulation {
     private final double scaling = 100000.0;
 
-    private final double heightFirstBox = 0.09 * scaling;
-    private final double width = 0.09 * scaling;
+    private final double heightFirstBox = 0.09;
+    private final double width = 0.09;
     private final double heightSecondBox;
     private final double topWallB;
     private final double bottomWallB;
 
     private final Logger logger = LoggerFactory.getLogger(Simulation.class);
 
-    private final double ballVelocity = 0.01 * scaling; // in m/s
-    private final double ballRadius = 0.0015 * scaling; // meters
+    private final double ballVelocity = 0.01; // in m/s
+    private final double ballRadius = 0.0015; // meters
     private final static double EPS = 1e-12;
 
     private final int particlesCount;
@@ -33,10 +33,10 @@ public class Simulation {
     private final List<Particle> particles;
 
     public Simulation(double heightSecondBox, int particlesCount) {
-        this.heightSecondBox = heightSecondBox * scaling;
+        this.heightSecondBox = heightSecondBox;
         this.particlesCount = particlesCount;
-        this.topWallB = (heightFirstBox + heightSecondBox * scaling) / 2;
-        this.bottomWallB = (heightFirstBox - heightSecondBox * scaling) / 2;
+        this.topWallB = (heightFirstBox + heightSecondBox) / 2;
+        this.bottomWallB = (heightFirstBox - heightSecondBox) / 2;
         this.particles = new ArrayList<>(particlesCount);
     }
 
@@ -128,6 +128,11 @@ public class Simulation {
             p.setBallPosition(newX, newY);
             for (Collision c : p.getCollisions()) {
                 c.setTime(c.getTime() - timeSkip);
+                if(c.collisionWithWall()){
+                    logger.info("new collision with wall time {} for particle {}", c.getTime(), p.getId());
+                }else{
+                    logger.info("new collision time {} for particle {} against {}", c.getTime(), c.getParticleA(), c.getParticleB());
+                }
             }
         }
 
@@ -453,16 +458,19 @@ public class Simulation {
         }
 
         double time = timeToPosition(x, finalPosition, particle.getBallVelocityX());
+        boolean atOpeningHeight = atOpeningHeight(particle.getBallPositionY(), time, particle.getBallVelocityY());
+        boolean isFalse = atOpeningHeight && ((particle.getBallVelocityX() > 0 && inBoxA) || (particle.getBallVelocityX() < 0 && !inBoxA));
         logger.debug("----- Vertical Wall Collision ------");
         logger.debug("particle {}", particle.getId());
         logger.debug("velocity {}", particle.getBallVelocityX());
         logger.debug("initial position {}", particle.getBallPositionX());
         logger.debug("final position {}", finalPosition);
         logger.debug("time {}",time);
+        logger.debug("COLLISION IS {}", isFalse ? "FALSE" : "TRUE");
         logger.debug("-----------");
-        boolean atOpeningHeight = atOpeningHeight(particle.getBallPositionY(), time, particle.getBallVelocityY());
 
-        if (atOpeningHeight && ((particle.getBallVelocityX() > 0 && inBoxA) || (particle.getBallVelocityX() < 0 && !inBoxA))) {
+
+        if (isFalse) {
             return new Collision(time, particle.getId(), Wall.VERTICAL, false);
         }
 
