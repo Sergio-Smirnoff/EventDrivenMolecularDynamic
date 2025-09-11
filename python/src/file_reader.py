@@ -31,7 +31,7 @@ def leer_header(path: str):
                 continue
             m = hdr_L.match(s)
             if m:
-                L = float(m.group(1))/100000.0
+                L = float(m.group(1))
                 continue
             if N is not None and L is not None:
                 break
@@ -76,7 +76,7 @@ def leer_frames(path: str):
             parts = lines[i].split(";")
             if len(parts) < 4:
                 raise ValueError(f"Línea inválida de partícula: '{lines[i]}'")
-            px, py, vx, vy = [float(x)/100000 for x in parts[:4]]
+            px, py, vx, vy = [float(x) for x in parts[:4]]
             particles.append(Particle(pid, px, py, vx, vy))
             i += 1
 

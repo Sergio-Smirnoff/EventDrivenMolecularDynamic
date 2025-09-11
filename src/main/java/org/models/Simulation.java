@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 
 public class Simulation {
-    private final double scaling = 100000.0;
 
     private final double heightFirstBox = 0.09;
     private final double width = 0.09;
@@ -92,6 +91,8 @@ public class Simulation {
         }
     }
 
+    // colison =>  => limpiar => recalcular =>  hacer colision => next colision
+
 
     /**
      * Finds the next event that will occur
@@ -104,6 +105,8 @@ public class Simulation {
             if (!p.hasCollisions()) continue;
             Collision earliestForP = p.getNextCollision();
             if (nextEvent == null || earliestForP.getTime() < nextEvent.getTime()) {
+
+                logger.debug("Found new next event for particle {}: time {}", p.getId(), earliestForP.getTime());
                 nextEvent = earliestForP;
             }
         }
@@ -127,6 +130,8 @@ public class Simulation {
             double newY = p.getBallPositionY() + p.getBallVelocityY() * timeSkip;
             p.setBallPosition(newX, newY);
             for (Collision c : p.getCollisions()) {
+                logger.debug("Advancing particle {}: particle time {} - time skip {}", p.getId(), c.getTime(), timeSkip);
+
                 c.setTime(c.getTime() - timeSkip);
                 if(c.collisionWithWall()){
                     logger.info("new collision with wall time {} for particle {}", c.getTime(), p.getId());
@@ -155,14 +160,8 @@ public class Simulation {
         PriorityQueue<Collision> collisions = collidingParticle.getCollisions();
         for (Collision collision : collisions) {
             if (collision.getWall() == null) {
-                if (collision.getParticleA() == collidingParticle.getId()) {
-                    Particle particleB = particles.get(collision.getParticleB());
-                    particleB.getCollisions().removeIf((col) -> col.getParticleA() == collidingParticle.getId());
-
-                } else if (collision.getParticleB() == collidingParticle.getId()) {
-                    Particle particleA = particles.get(collision.getParticleA());
-                    particleA.getCollisions().removeIf((col) -> col.getParticleB() == collidingParticle.getId());
-                }
+                Particle particleB = particles.get(collision.getParticleB());
+                particleB.getCollisions().removeIf((col) -> col.getParticleB() == collidingParticle.getId());
             }
         }
         collidingParticle.clearCollisions();
@@ -255,6 +254,9 @@ public class Simulation {
         double impulse = -2 * vn / 2; // assuming equal mass
 
         // Update velocities
+        logger.info("previous velocities for colliding particles {} against {}", pA.getId(), pB.getId());
+        logger.info("particle {}: vx {}    vy {}", pA.getId(), pA.getBallVelocityX(), pA.getBallVelocityY());
+        logger.info("particle {}: vx {}    vy {}", pB.getId(), pB.getBallVelocityX(), pB.getBallVelocityY());
         pA.setBallVelocity(pA.getBallVelocityX() - impulse * nx, pA.getBallVelocityY() - impulse * ny);
         pB.setBallVelocity(pB.getBallVelocityX() + impulse * nx, pB.getBallVelocityY() + impulse * ny);
 
@@ -312,13 +314,14 @@ public class Simulation {
             double dx = other.getBallPositionX() - particle.getBallPositionX();
             double dy = other.getBallPositionY() - particle.getBallPositionY();
             double distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance < 2 * ballRadius) {
+            if (distance <= 2 * ballRadius) {
                 double time = timeToCollision(particle, other);
                 logger.debug("Predicted collision between particle {} and {} in time {}", particle.getId(), other.getId(), time);
                 if (time != Double.POSITIVE_INFINITY && time >= 0) {
                     Collision collision = new Collision(time, particle.getId(), other.getId(), null);
+                    Collision secondColl = new Collision(time, other.getId(), particle.getId(), null);
                     particle.addCollision(collision);
-                    other.addCollision(collision);
+                    other.addCollision(secondColl);
                 }
             }
         }
@@ -359,6 +362,8 @@ public class Simulation {
 
         double sqrtD = Math.sqrt(d);
 
+
+        // TODO:chequear 
         // logger.debug("Discriminant: {} and sqrtD: {}", d, sqrtD);
         double t1 = (-dvdr - sqrtD) / dvdv;
         double t2 = (-dvdr + sqrtD) / dvdv;
@@ -563,7 +568,7 @@ public class Simulation {
                     double dy = ballPositionY - other.getBallPositionY();
                     double distance = Math.sqrt(dx * dx + dy * dy);
 
-                    if (distance < 2 * ballRadius) {
+                    if (distance <= 2 * ballRadius) {
                         overlaps = true;
                         break; 
                     }

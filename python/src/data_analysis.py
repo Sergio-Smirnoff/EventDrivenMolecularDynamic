@@ -213,7 +213,7 @@ if __name__ == "__main__":
     files = ["./test-data/initial_state_0.03.csv",
     "./test-data/initial_state_0.05.csv",
     "./test-data/initial_state_0.06.csv",
-    "./test-data/initial_state_0.07.csv",
+    "./test-data/initial_state.csv",
     "./test-data/initial_state_0.08.csv",
     "./test-data/initial_state_0.09.csv"]
 
