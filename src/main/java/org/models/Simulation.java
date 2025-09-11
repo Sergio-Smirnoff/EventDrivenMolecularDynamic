@@ -91,6 +91,8 @@ public class Simulation {
         }
     }
 
+    // colison =>  => limpiar => recalcular =>  hacer colision => next colision
+
 
     /**
      * Finds the next event that will occur
@@ -103,6 +105,7 @@ public class Simulation {
             if (!p.hasCollisions()) continue;
             Collision earliestForP = p.getNextCollision();
             if (nextEvent == null || earliestForP.getTime() < nextEvent.getTime()) {
+
                 logger.debug("Found new next event for particle {}: time {}", p.getId(), earliestForP.getTime());
                 nextEvent = earliestForP;
             }
@@ -152,14 +155,8 @@ public class Simulation {
         PriorityQueue<Collision> collisions = collidingParticle.getCollisions();
         for (Collision collision : collisions) {
             if (collision.getWall() == null) {
-                if (collision.getParticleA() == collidingParticle.getId()) {
-                    Particle particleB = particles.get(collision.getParticleB());
-                    particleB.getCollisions().removeIf((col) -> col.getParticleA() == collidingParticle.getId());
-
-                } else if (collision.getParticleB() == collidingParticle.getId()) {
-                    Particle particleA = particles.get(collision.getParticleA());
-                    particleA.getCollisions().removeIf((col) -> col.getParticleB() == collidingParticle.getId());
-                }
+                Particle particleB = particles.get(collision.getParticleB());
+                particleB.getCollisions().removeIf((col) -> col.getParticleB() == collidingParticle.getId());
             }
         }
         collidingParticle.clearCollisions();
@@ -314,8 +311,9 @@ public class Simulation {
                 logger.debug("Predicted collision between particle {} and {} in time {}", particle.getId(), other.getId(), time);
                 if (time != Double.POSITIVE_INFINITY && time >= 0) {
                     Collision collision = new Collision(time, particle.getId(), other.getId(), null);
+                    Collision secondColl = new Collision(time, other.getId(), particle.getId(), null);
                     particle.addCollision(collision);
-                    other.addCollision(collision);
+                    other.addCollision(secondColl);
                 }
             }
         }
