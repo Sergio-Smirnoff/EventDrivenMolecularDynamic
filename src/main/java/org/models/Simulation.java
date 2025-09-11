@@ -25,6 +25,7 @@ public class Simulation {
 
     private final double ballVelocity = 0.01; // in m/s
     private final double ballRadius = 0.0015; // meters
+    private final static double EPS = 1e-12;
 
     private final int particlesCount;
     private double totalTime = 0; // in seconds
@@ -92,33 +93,6 @@ public class Simulation {
         return nextEvent;
     }
 
-    /**
-     *      DEBUGGING
-     * Calculates if particle is beyond possible limits, only for heightFirstBox=heightSecondBox
-     *
-     *
-     * ? (x > (width - ballRadius) && x < (width + ballRadius))
-     * @param x
-     * @param y
-     * @return
-     */
-    private boolean isBeyondLimits(double x, double y){
-        boolean inBoxA = x < width - ballRadius;
-        boolean inBoxB = x > width + ballRadius;
-        boolean toReturn;
-
-        if(inBoxA){
-
-        }else{
-
-        }
-
-        toReturn = x < ballRadius || (x > (width - ballRadius) && x < (width + ballRadius)) || x > ( 2 * width - ballRadius);
-        toReturn = toReturn || y > (heightFirstBox - ballRadius) || y < ballRadius ;
-        return toReturn;
-    }
-
-
 
     /**
      * Advances the system to the next event
@@ -134,10 +108,6 @@ public class Simulation {
         for (Particle p : particles) {
             double newX = p.getBallPositionX() + p.getBallVelocityX() * timeSkip;
             double newY = p.getBallPositionY() + p.getBallVelocityY() * timeSkip;
-            if(isBeyondLimits(newX, newY)){
-                logger.info("particle {} is off limits for time {} for box B", p.getId(), timeSkip);
-                logger.info("position x: {}      position y: {}", newX, newY);
-            }
             p.setBallPosition(newX, newY);
             for (Collision c : p.getCollisions()) {
                 c.setTime(c.getTime() - timeSkip);
@@ -170,29 +140,52 @@ public class Simulation {
         collidingParticle.clearCollisions();
     }
 
-    // CHEQUEEAAAARRRR PORQUE ES SOLO PARA EL CASO QUE AMBAS TENGAN LA MISMA ALTURA
+
 
     /**
      * Given a particle that collides with a wall, or to the invisible wall, corrects
      * the value to avoid things like y = 0.00150000000000002 or y = 0.001499999999999999999996
+     * If the particle happens to be in the edges of the opening (0.0885 or 0.0915) then
+     * it leaves it as it is
+     *
      * @param p particle which collides
      * @param wall wall to which the particle collides
      */
     private void snapToWall(Particle p, Wall wall){
-        boolean inBoxA = p.getBallPositionX() < width - ballRadius;
-        boolean inBoxB = p.getBallPositionX() > width + ballRadius;
+        boolean inBoxA = p.getBallPositionX() < width - ballRadius - EPS;
+        boolean inBoxB = p.getBallPositionX() > width + ballRadius + EPS;
         if(wall == Wall.VERTICAL){
-            double newX = (p.getBallVelocityX() > 0) ?
-                    (inBoxA ? width - ballRadius : 2 * width - ballRadius) :
-                    (inBoxB ? width + ballRadius : ballRadius);
+            double newX = p.getBallPositionX();
+            if(p.getBallVelocityX()>0){
+                if(inBoxA){
+                    newX = width - ballRadius;
+                } else if (inBoxB) {
+                    newX = 2 * width - ballRadius;
+                }
+            }else{
+                if(inBoxA){
+                    newX = ballRadius;
+                } else if (inBoxB) {
+                    newX = width + ballRadius;
+                }
+            }
             p.setBallPosition(newX, p.getBallPositionY());
-            logger.info("Corrected particle {} to vertical wall at x={} y={}", p.getId(), newX, p.getBallPositionY());
         }else{
-            double newY = (p.getBallVelocityY() > 0) ?
-                    (inBoxA ? heightFirstBox - ballRadius : topWallB - ballRadius) :
-                    (inBoxB ? ballRadius : bottomWallB + ballRadius);
+            double newY = p.getBallPositionY();
+            if(p.getBallVelocityY() > 0){
+                if(inBoxA){
+                    newY = heightFirstBox - ballRadius;
+                } else if (inBoxB) {
+                    newY = topWallB - ballRadius;
+                }
+            }else{
+                if(inBoxA){
+                    newY = ballRadius;
+                } else if (inBoxB) {
+                    newY = bottomWallB + ballRadius;
+                }
+            }
             p.setBallPosition(p.getBallPositionX(), newY);
-            logger.info("Corrected particle {} to horizontal wall at x={} y={}", p.getId(), p.getBallPositionX(),newY);
         }
     }
 
@@ -222,7 +215,7 @@ public class Simulation {
             if(collision.isTrueCollision()){
                 handleWallBounce(particleA, collision.getWall());
             }else{
-                logger.info("False Collision between particle {} to vertical wall at y={} and x={}", particleA.getId(), particleA.getBallPositionY(), particleA.getBallPositionX());
+                logger.info("False Collision: Particle {} passing through opening.", particleA.getId());
             }
             calculateParticleCollisions(particleA);
         }
@@ -250,6 +243,8 @@ public class Simulation {
 
     /**
      * Function that calculates the time it takes for a particle to collide with Horizontal walls.
+     * If the particle is in the edges of the opening (0.0885 or 0.0915) then the comparison
+     * depends on where the particle is moving, if its from A to B or from B to A
      *
      * @param particle describes the particle to study
      * @return the new Collision item set to the corresponding wall
@@ -262,10 +257,24 @@ public class Simulation {
         double finalPosition;
 
         if (particle.getBallVelocityY() > 0) {
-            double topWall = inBoxA ? heightFirstBox : topWallB;
+            double topWall;
+            if(inBoxA){
+                topWall = heightFirstBox;
+            } else if (inBoxB) {
+                topWall = topWallB;
+            }else{
+                topWall = particle.getBallVelocityX() > 0 ? topWallB : heightFirstBox;
+            }
             finalPosition = topWall - ballRadius;
         } else {
-            double bottomWall = inBoxB ?  bottomWallB : 0;
+            double bottomWall;
+            if(inBoxA){
+                bottomWall = 0;
+            } else if (inBoxB) {
+                bottomWall = bottomWallB;
+            }else{
+                bottomWall = particle.getBallVelocityX() > 0 ? bottomWallB : 0;
+            }
             finalPosition = bottomWall + ballRadius;
         }
         double time = timeToPosition(y, finalPosition, particle.getBallVelocityY());
@@ -297,10 +306,6 @@ public class Simulation {
      * Function that calculates the time it takes for a particle to collide with vertical walls.
      * If the particle collides with the border wall at height of the opening of boxB then
      * the collision is discarded, since it's not a real collision.
-     * todo:if i have x < width but the particle has a little bit of itself in box B, is
-     *      it in box A or in box B?
-     *
-     *
      *
      * @param particle describes the particle to study
      * @return the new Collision item set to the corresponding wall
@@ -431,14 +436,3 @@ public class Simulation {
     }
 
 }
-
-/**
- *
- * getNextEvent
- * advnace
- * handle collision
- * save state
- *
- *
- *
- */

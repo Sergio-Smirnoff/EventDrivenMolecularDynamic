@@ -17,7 +17,7 @@ public class SimulationTest {
 
     @BeforeEach
     void setUp() throws NoSuchMethodException{
-        sim = new Simulation(0.09, 1);
+        sim = new Simulation(0.06, 1);
         timeToVerticalWall = Simulation.class.getDeclaredMethod("timeToVerticalWall", Particle.class);
         timeToHorizontalWall = Simulation.class.getDeclaredMethod("timeToHorizontalWall", Particle.class);
 
@@ -41,6 +41,20 @@ public class SimulationTest {
         assertEquals(Wall.VERTICAL, collision.getWall());
     }
 
+    @Test
+    void testVerticalWallCollisionFalseCollision() throws InvocationTargetException, IllegalAccessException {
+        Particle particle = new Particle(0, 0.08, 0.045, 0.1, 0);
+
+        Collision collision = (Collision) timeToVerticalWall.invoke(sim, particle);
+
+        assertNotNull(collision);
+        assertEquals(Wall.VERTICAL, collision.getWall());
+        assertFalse(collision.isTrueCollision());
+        assertEquals(0.085, collision.getTime(), 1e-5);
+    }
+
+
+
     /* --------------------- Horizontal Wall Collision Cases --------------------- */
     @Test
     void testHorizontalWallCollisionWithNegativeVxVy() throws InvocationTargetException, IllegalAccessException {
@@ -54,5 +68,17 @@ public class SimulationTest {
         assertNotNull(collision);
         assertEquals(expectedTime, collision.getTime(), 1e-5);
         assertEquals(Wall.HORIZONTAL, collision.getWall());
+    }
+
+    @Test
+    void testHorizontalWallCollisionFalseCollisionForParticleFromBoxAToBoxB() throws InvocationTargetException, IllegalAccessException {
+        Particle particle = new Particle(0, 0.0885, 0.045, 0.1*Math.cos(Math.PI / 6),  0.1*Math.sin(Math.PI / 6));
+
+        Collision collision = (Collision) timeToHorizontalWall.invoke(sim, particle);
+
+        assertNotNull(collision);
+        assertEquals(Wall.HORIZONTAL, collision.getWall());
+        assertTrue(collision.isTrueCollision());
+        assertEquals(0.57, collision.getTime(), 1e-5);
     }
 }
