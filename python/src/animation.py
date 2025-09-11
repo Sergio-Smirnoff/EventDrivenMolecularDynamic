@@ -58,10 +58,15 @@ def animate(filename, save_as=None, print_data=False, print_first_k=5):
         return circles
 
     def update(frame):
-        time, _, particles = frame
+        time, event_pid, particles = frame
 
         for c, p in zip(circles, particles):
             c.set_center((p.x, p.y))
+            c.set_facecolor("blue")
+
+        if event_pid:
+            for particle_id in event_pid:
+                circles[particle_id].set_facecolor("red")
 
         if print_data:
             print(f"t={time:.5f} | N={len(particles)}")

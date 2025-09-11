@@ -57,7 +57,7 @@ def presiones_vs_t(filename, interval=0.8):
 
         # Decide which wall was collided with
         if p_id is not None:
-            p = particles[p_id]
+            p = particles[p_id[0]]
             if p.x <= 0 + particle_radius:
                 walls["A_left"] += 2 * abs(p.vx)
             if p.y <= 0 + particle_radius:
