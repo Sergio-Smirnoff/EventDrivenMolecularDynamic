@@ -14,17 +14,18 @@ import org.slf4j.LoggerFactory;
 
 
 public class Simulation {
+    private final double scaling = 100000.0;
 
-    private final double heightFirstBox = 0.09;
-    private final double width = 0.09;
+    private final double heightFirstBox = 0.09 * scaling;
+    private final double width = 0.09 * scaling;
     private final double heightSecondBox;
     private final double topWallB;
     private final double bottomWallB;
 
     private final Logger logger = LoggerFactory.getLogger(Simulation.class);
 
-    private final double ballVelocity = 0.01; // in m/s
-    private final double ballRadius = 0.0015; // meters
+    private final double ballVelocity = 0.01 * scaling; // in m/s
+    private final double ballRadius = 0.0015 * scaling; // meters
     private final static double EPS = 1e-12;
 
     private final int particlesCount;
@@ -32,20 +33,22 @@ public class Simulation {
     private final List<Particle> particles;
 
     public Simulation(double heightSecondBox, int particlesCount) {
-        this.heightSecondBox = heightSecondBox;
+        this.heightSecondBox = heightSecondBox * scaling;
         this.particlesCount = particlesCount;
-        this.topWallB = (heightFirstBox + heightSecondBox) / 2;
-        this.bottomWallB = (heightFirstBox - heightSecondBox) / 2;
+        this.topWallB = (heightFirstBox + heightSecondBox * scaling) / 2;
+        this.bottomWallB = (heightFirstBox - heightSecondBox * scaling) / 2;
         this.particles = new ArrayList<>(particlesCount);
     }
 
     /* ----------------------- Main Simulation Loop Functions ----------------------- */
 
     public void runSimulation(int maxIterations, String filepath){
-        logger.info("Starting Simulation wit");
+        logger.info("Starting Simulation with {}", particlesCount);
         initializeSystem();
-        saveSimulationState(filepath, true);
+        saveSimulationState(filepath, true, new ArrayList<>()); // save initial state
         calculateInitialCollisions();
+
+        List<Particle> collisionedParticles = new ArrayList<>();
 
         for (int collisionCount = 1; collisionCount <= maxIterations; collisionCount++) {
             logger.info("***********************");
@@ -53,6 +56,7 @@ public class Simulation {
 
             // 1. Find the very next event in the entire system.
             Collision nextEvent = findNextEvent();
+
             if (nextEvent == null || nextEvent.getTime() == Double.POSITIVE_INFINITY) {
                 logger.warn("No more collisions can be predicted. Ending simulation.");
                 break;
@@ -61,6 +65,10 @@ public class Simulation {
             logger.info(" ");
             logger.info("colliding time {}", nextEvent.getTime());
             logger.info("colliding particle {}", nextEvent.getParticleA());
+            if (nextEvent.getParticleB() != -1)
+                logger.info("colliding with particle {}", nextEvent.getParticleB());
+            else if (nextEvent.getWall() != null)
+                logger.info("colliding with wall {}", nextEvent.getWall());
             logger.info("collision {}", nextEvent.isTrueCollision() ? "true":"false");
             logger.info(" ");
 
@@ -71,7 +79,16 @@ public class Simulation {
             // 4. Resolve the collision and re-predict futures for involved particles.
             resolveCollision(nextEvent);
 
-            saveSimulationState(filepath, false);
+            // 5. Save the state of the system.
+            if ( nextEvent.getParticleA() >= 0 && nextEvent.getParticleA() < particlesCount ) {
+                collisionedParticles.add(particles.get(nextEvent.getParticleA()));
+            }
+            if ( nextEvent.getParticleB() >= 0 && nextEvent.getParticleB() < particlesCount ) {
+                collisionedParticles.add(particles.get(nextEvent.getParticleB()));
+            }
+
+            saveSimulationState(filepath, false, collisionedParticles);
+            collisionedParticles.clear();
         }
     }
 
@@ -133,8 +150,14 @@ public class Simulation {
         PriorityQueue<Collision> collisions = collidingParticle.getCollisions();
         for (Collision collision : collisions) {
             if (collision.getWall() == null) {
-                Particle particleB = particles.get(collision.getParticleB());
-                particleB.getCollisions().removeIf((col) -> col.getParticleB() == collidingParticle.getId());
+                if (collision.getParticleA() == collidingParticle.getId()) {
+                    Particle particleB = particles.get(collision.getParticleB());
+                    particleB.getCollisions().removeIf((col) -> col.getParticleA() == collidingParticle.getId());
+
+                } else if (collision.getParticleB() == collidingParticle.getId()) {
+                    Particle particleA = particles.get(collision.getParticleA());
+                    particleA.getCollisions().removeIf((col) -> col.getParticleB() == collidingParticle.getId());
+                }
             }
         }
         collidingParticle.clearCollisions();
@@ -203,6 +226,36 @@ public class Simulation {
         }
     }
 
+        // check
+    private void handleParticleCollision(Particle pA, Particle pB){
+        double dx = pB.getBallPositionX() - pA.getBallPositionX();
+        double dy = pB.getBallPositionY() - pA.getBallPositionY();
+        double distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Normal vector
+        double nx = dx / distance;
+        double ny = dy / distance;
+
+        // Relative velocity
+        double dvx = pB.getBallVelocityX() - pA.getBallVelocityX();
+        double dvy = pB.getBallVelocityY() - pA.getBallVelocityY();
+
+        // Velocity along the normal
+        double vn = dvx * nx + dvy * ny;
+
+        // If particles are moving apart, do nothing
+        if (vn > 0) return;
+
+        // Impulse scalar
+        double impulse = -2 * vn / 2; // assuming equal mass
+
+        // Update velocities
+        pA.setBallVelocity(pA.getBallVelocityX() - impulse * nx, pA.getBallVelocityY() - impulse * ny);
+        pB.setBallVelocity(pB.getBallVelocityX() + impulse * nx, pB.getBallVelocityY() + impulse * ny);
+
+        logger.info("Colliding particle {} with particle {}", pA.getId(), pB.getId());
+    }
+
     /**
      * Resolves occurring collision. Analyses if wall collision or particle collision occur.
      * If particle collides with invisible wall, it only recalculates collision since particle
@@ -216,9 +269,16 @@ public class Simulation {
             if(collision.isTrueCollision()){
                 handleWallBounce(particleA, collision.getWall());
             }else{
-                logger.info("False Collision: Particle {} passing through opening.", particleA.getId());
+                logger.info("False Collision between particle {} to vertical wall at y={} and x={}", particleA.getId(), particleA.getBallPositionY(), particleA.getBallPositionX());
             }
-            calculateParticleCollisions(particleA);
+        }else{
+            handleParticleCollision(particleA, particles.get(collision.getParticleB()));
+        }
+
+        calculateParticleCollisions(particleA);
+        if (collision.getParticleB() != -1 && collision.getParticleB() < particlesCount) {
+            Particle particleB = particles.get(collision.getParticleB());
+            calculateParticleCollisions(particleB);
         }
     }
 
@@ -240,7 +300,74 @@ public class Simulation {
         // Collisions with walls
         particle.addCollision(timeToVerticalWall(particle));
         particle.addCollision(timeToHorizontalWall(particle));
+
+        // Collisions with other particles
+        for (Particle other : particles) {
+            if (other.getId() == particle.getId()) continue; // Skip self-collision
+            double dx = other.getBallPositionX() - particle.getBallPositionX();
+            double dy = other.getBallPositionY() - particle.getBallPositionY();
+            double distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < 2 * ballRadius) {
+                double time = timeToCollision(particle, other);
+                logger.debug("Predicted collision between particle {} and {} in time {}", particle.getId(), other.getId(), time);
+                if (time != Double.POSITIVE_INFINITY && time >= 0) {
+                    Collision collision = new Collision(time, particle.getId(), other.getId(), null);
+                    particle.addCollision(collision);
+                    other.addCollision(collision);
+                }
+            }
+        }
     }
+
+
+
+    private double timeToCollision(Particle a, Particle b) {
+        double dx  = b.getBallPositionX() - a.getBallPositionX();
+        double dy  = b.getBallPositionY() - a.getBallPositionY();
+        double dvx = b.getBallVelocityX() - a.getBallVelocityX();
+        double dvy = b.getBallVelocityY() - a.getBallVelocityY();
+
+        double dvdr = dx*dvx + dy*dvy;                // r·v
+        double dvdv = dvx*dvx + dvy*dvy;              // v·v
+        double drdr = dx*dx + dy*dy;                  // r·r
+        double sigma = a.getBallRadius() + b.getBallRadius(); // R1+R2 (no asumas 2*ballRadius si pueden diferir)
+
+        // logger.debug("dx: {}", dx);
+        // logger.debug("dy: {}", dy);
+        // logger.debug("dvx: {}", dvx);
+        // logger.debug("dvy: {}", dvy);
+        // logger.debug("dvdr (r·v): {}", dvdr);
+        // logger.debug("dvdv (v·v): {}", dvdv);
+        // logger.debug("drdr (r·r): {}", drdr);
+        // logger.debug("sigma (R1+R2): {}", sigma);
+
+
+
+        // No se aproximan (o casi tangencial)
+        if (dvdr >= -EPS) return Double.POSITIVE_INFINITY;
+
+        // Sin velocidad relativa
+        if (dvdv <= EPS) return Double.POSITIVE_INFINITY;
+
+        double d = dvdr*dvdr - dvdv*(drdr - sigma*sigma);
+        if (d < 0) return Double.POSITIVE_INFINITY;
+
+        double sqrtD = Math.sqrt(d);
+
+        // logger.debug("Discriminant: {} and sqrtD: {}", d, sqrtD);
+        double t1 = (-dvdr - sqrtD) / dvdv;
+        double t2 = (-dvdr + sqrtD) / dvdv;
+
+        double t = Double.POSITIVE_INFINITY;
+        if (t1 >= 0) t = t1;
+        if (t2 >= 0 && t2 < t) t = t2;
+
+        logger.debug("Time to collision between particle {} and {}: {}", a.getId(), b.getId(), t);
+
+        // Si ambas negativas, no hay choque futuro
+        return t;
+    }
+
 
     /**
      * Function that calculates the time it takes for a particle to collide with Horizontal walls.
@@ -378,7 +505,7 @@ public class Simulation {
      * Locale.setDefault(Locale.US); for writing the decimals with comma
      */
 
-    private void saveSimulationState(String filePath, boolean printHeaders) {
+    private void saveSimulationState(String filePath, boolean printHeaders, List<Particle> particlesToSave) {
         // Logic to save the simulation state to a file
         Locale.setDefault(Locale.US);
         try (PrintWriter writer = new PrintWriter(new FileWriter(filePath, !printHeaders))) { // append mode if not printing headers
@@ -387,7 +514,13 @@ public class Simulation {
                 writer.println("N: " + particlesCount);
                 writer.println("L: " + heightSecondBox);
             }
-            writer.printf("%g;\n", totalTime); // fix with pressure
+            writer.printf("%g;", totalTime); // fix with pressure
+
+            for (Particle p : particlesToSave) {
+                writer.printf("%d;", p.getId());
+            }
+
+            writer.printf("\n");
 
             // Write particle data
             writer.printf("positionX;positionY;velocityX;velocityY\n");

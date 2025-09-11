@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from file_reader import leer_header, leer_frames
+from matplotlib.patches import Circle
+from src.file_reader import leer_header, leer_frames
 import numpy as np
 from pathlib import Path
 
@@ -17,6 +18,7 @@ def animate(filename, save_as=None, print_data=False, print_first_k=5):
     square_size = 0.09
     rect_width = 0.09
     rect_height = L
+    ball_radius = 0.0015
 
     total_width = square_size + rect_width
     total_height = max(square_size, rect_height)
@@ -31,7 +33,6 @@ def animate(filename, save_as=None, print_data=False, print_first_k=5):
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
 
-    # Draw all static contours first
     ax.plot([0, 0], [0, square_size], color='black', linewidth=1)
     ax.plot([0, square_size], [0, 0], color='black', linewidth=1)
     ax.plot([0, square_size], [square_size, square_size], color='black', linewidth=1)
@@ -41,20 +42,26 @@ def animate(filename, save_as=None, print_data=False, print_first_k=5):
     ax.plot([square_size, square_size], [y_offset + L, total_height], color='black', linewidth=1)
     ax.plot([square_size, square_size], [0, y_offset], color='black', linewidth=1)
 
-    # The scatter plot is the only artist that will be animated
-    scat = ax.scatter([], [], s=10)
-
     frames = list(leer_frames(str(file_path)))
 
+    first_time, _, first_particles = frames[0]
+    circles = [
+        Circle((p.x, p.y), radius=ball_radius, fc="blue", ec="none", alpha=0.7)
+        for p in first_particles
+    ]
+    for c in circles:
+        ax.add_patch(c)
+
     def init():
-        scat.set_offsets(np.empty((0, 2)))
-        return scat,
+        for c in circles:
+            c.set_center((-10, -10))
+        return circles
 
     def update(frame):
-        time, particles = frame
-        coords = [(float(p.x), float(p.y)) for p in particles]
-        # Only update the scatter plot's data
-        scat.set_offsets(coords)
+        time, _, particles = frame
+
+        for c, p in zip(circles, particles):
+            c.set_center((p.x, p.y))
 
         if print_data:
             print(f"t={time:.5f} | N={len(particles)}")
@@ -63,9 +70,8 @@ def animate(filename, save_as=None, print_data=False, print_first_k=5):
             if len(particles) > print_first_k:
                 print(f"  ... ({len(particles) - print_first_k} más)")
 
-        return scat,
+        return circles
 
-    # blit=True is now reliable because nothing else in the plot is changing.
     ani = FuncAnimation(fig, update, frames=frames, init_func=init,
                         blit=True, interval=20)
 
