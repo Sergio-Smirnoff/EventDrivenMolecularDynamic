@@ -257,8 +257,6 @@ public class Simulation {
      */
     private void resolveCollision(Collision collision) {
         Particle particleA = particles.get(collision.getParticleA());
-        if(collision.getWall() != null){
-            snapToWall(particleA, collision.getWall());
             if(collision.isTrueCollision()){
                 if ( collision.getParticleB() != -1 && collision.getWall() == null ) {
                     handleParticleCollision(particleA, particles.get(collision.getParticleB()));
@@ -282,7 +280,6 @@ public class Simulation {
                 cleanCollisions(particleB);
                 calculateParticleCollisions(particleB);
             }
-        }
     }
 
     /**
