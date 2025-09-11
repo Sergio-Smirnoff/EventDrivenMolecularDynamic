@@ -66,8 +66,8 @@ public class Simulation {
             logger.info("colliding particle {}", nextEvent.getParticleA());
             if (nextEvent.getParticleB() != -1)
                 logger.info("colliding with particle {}", nextEvent.getParticleB());
-            else if (nextEvent.getWall() != null)
-                logger.info("colliding with wall {}", nextEvent.getWall());
+            else if (nextEvent.getCollisionType() != CollisionType.PARTICLE)
+                logger.info("colliding with wall {}", nextEvent.getCollisionType());
             logger.info("collision {}", nextEvent.isTrueCollision() ? "true":"false");
             logger.info(" ");
 
@@ -159,7 +159,7 @@ public class Simulation {
     private void cleanCollisions(Particle collidingParticle){
         PriorityQueue<Collision> collisions = collidingParticle.getCollisions();
         for (Collision collision : collisions) {
-            if (collision.getWall() == null) {
+            if (collision.getCollisionType() == CollisionType.PARTICLE) {
                 Particle particleB = particles.get(collision.getParticleB());
                 particleB.getCollisions().removeIf((col) -> col.getParticleB() == collidingParticle.getId());
             }
@@ -178,10 +178,10 @@ public class Simulation {
      * @param p particle which collides
      * @param wall wall to which the particle collides
      */
-    private void snapToWall(Particle p, Wall wall){
+    private void snapToWall(Particle p, CollisionType wall){
         boolean inBoxA = p.getBallPositionX() < width - ballRadius - EPS;
         boolean inBoxB = p.getBallPositionX() > width + ballRadius + EPS;
-        if(wall == Wall.VERTICAL){
+        if(wall == CollisionType.VERTICAL){
             double newX = p.getBallPositionX();
             if(p.getBallVelocityX()>0){
                 if(inBoxA){
@@ -222,8 +222,8 @@ public class Simulation {
      * @param p colliding particle
      * @param w colliding wall
      */
-    private void handleWallBounce(Particle p, Wall w){
-        if (w.equals(Wall.VERTICAL)) {
+    private void handleWallBounce(Particle p, CollisionType w){
+        if (w.equals(CollisionType.VERTICAL)) {
             p.setBallVelocity(-p.getBallVelocityX(), p.getBallVelocityY());
         } else {
             p.setBallVelocity(p.getBallVelocityX(), -p.getBallVelocityY());
@@ -261,14 +261,16 @@ public class Simulation {
         logger.info("particle {}: vx {}    vy {}", b.getId(), b.getBallVelocityX(), b.getBallVelocityY());
 
         // actualizar velocidades: v' = v ± (J/m) * n
-        a.setBallVelocity(
-            a.getBallVelocityX() + (J / mi) * nx,
-            a.getBallVelocityY() + (J / mi) * ny
-        );
-        b.setBallVelocity(
-            b.getBallVelocityX() - (J / mj) * nx,
-            b.getBallVelocityY() - (J / mj) * ny
-        );
+        double newVxForA = a.getBallVelocityX() + (J / mi) * nx;
+        double newVyForA = a.getBallVelocityY() + (J / mi) * ny;
+        double newVxForB = b.getBallVelocityX() + (J / mi) * nx;
+        double newVyForB = b.getBallVelocityY() + (J / mi) * ny;
+
+        logger.info("new velocities for colliding particles {} against {}", a.getId(), a.getId());
+        logger.info("particle {}: vx {}    vy {}", a.getId(), newVxForA, newVyForA);
+        logger.info("particle {}: vx {}    vy {}", b.getId(), newVxForB, newVyForB);
+        a.setBallVelocity( newVxForA, newVyForA);
+        b.setBallVelocity(newVxForB, newVyForB);
 
         logger.info("Colliding particle {} with particle {}", a.getId(), b.getId());
     }
@@ -281,14 +283,15 @@ public class Simulation {
      */
     private void resolveCollision(Collision collision) {
         Particle particleA = particles.get(collision.getParticleA());
-        if(collision.getWall() != null){
-            snapToWall(particleA, collision.getWall());
+        if(collision.getCollisionType() == CollisionType.HORIZONTAL || collision.getCollisionType() == CollisionType.VERTICAL){
+            snapToWall(particleA, collision.getCollisionType());
             if(collision.isTrueCollision()){
-                handleWallBounce(particleA, collision.getWall());
+                handleWallBounce(particleA, collision.getCollisionType());
             }else{
                 logger.info("False Collision between particle {} to vertical wall at y={} and x={}", particleA.getId(), particleA.getBallPositionY(), particleA.getBallPositionX());
             }
         }else{
+            logger.info("HANDLING PARTICLE COLLISION BETWEEN {} AND {}", particleA.getId(), collision.getParticleB());
             handleParticleCollision(particleA, particles.get(collision.getParticleB()));
         }
 
@@ -328,8 +331,8 @@ public class Simulation {
                 double time = timeToCollision(particle, other);
                 logger.debug("Predicted collision between particle {} and {} in time {}", particle.getId(), other.getId(), time);
                 if (time != Double.POSITIVE_INFINITY && time >= 0) {
-                    Collision collision = new Collision(time, particle.getId(), other.getId(), null);
-                    Collision secondColl = new Collision(time, other.getId(), particle.getId(), null);
+                    Collision collision = new Collision(time, particle.getId(), other.getId(), CollisionType.PARTICLE);
+                    Collision secondColl = new Collision(time, other.getId(), particle.getId(), CollisionType.PARTICLE);
                     particle.addCollision(collision);
                     other.addCollision(secondColl);
                 }
@@ -433,7 +436,7 @@ public class Simulation {
         logger.debug("final position {}", finalPosition);
         logger.debug("time {}",time);
         logger.debug("-----------");
-        return new Collision(time, particle.getId(), Wall.HORIZONTAL);
+        return new Collision(time, particle.getId(), CollisionType.HORIZONTAL);
     }
 
 
@@ -486,10 +489,10 @@ public class Simulation {
 
 
         if (isFalse) {
-            return new Collision(time, particle.getId(), Wall.VERTICAL, false);
+            return new Collision(time, particle.getId(), CollisionType.VERTICAL, false);
         }
 
-        return new Collision(time, particle.getId(), Wall.VERTICAL);
+        return new Collision(time, particle.getId(), CollisionType.VERTICAL);
     }
 
     /**

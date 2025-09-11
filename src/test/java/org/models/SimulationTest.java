@@ -38,7 +38,7 @@ public class SimulationTest {
         // Then the collision time and wall type should be correct
         assertNotNull(collision);
         assertEquals(expectedTime, collision.getTime(), 1e-5);
-        assertEquals(Wall.VERTICAL, collision.getWall());
+        assertEquals(CollisionType.VERTICAL, collision.getCollisionType());
     }
 
     @Test
@@ -48,7 +48,7 @@ public class SimulationTest {
         Collision collision = (Collision) timeToVerticalWall.invoke(sim, particle);
 
         assertNotNull(collision);
-        assertEquals(Wall.VERTICAL, collision.getWall());
+        assertEquals(CollisionType.VERTICAL, collision.getCollisionType());
         assertFalse(collision.isTrueCollision());
         assertEquals(0.085, collision.getTime(), 1e-5);
     }
@@ -67,7 +67,7 @@ public class SimulationTest {
         // Then the collision time and wall type should be correct
         assertNotNull(collision);
         assertEquals(expectedTime, collision.getTime(), 1e-5);
-        assertEquals(Wall.HORIZONTAL, collision.getWall());
+        assertEquals(CollisionType.HORIZONTAL, collision.getCollisionType());
     }
 
     @Test
@@ -77,7 +77,7 @@ public class SimulationTest {
         Collision collision = (Collision) timeToHorizontalWall.invoke(sim, particle);
 
         assertNotNull(collision);
-        assertEquals(Wall.HORIZONTAL, collision.getWall());
+        assertEquals(CollisionType.HORIZONTAL, collision.getCollisionType());
         assertTrue(collision.isTrueCollision());
         assertEquals(0.57, collision.getTime(), 1e-5);
     }

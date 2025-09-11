@@ -5,27 +5,27 @@ public class Collision implements Comparable<Collision> {
     private double time; // Time until collision occurs
     private int particleA = -1; // Main Particle id
     private int particleB = -1; // Collision with id
-    private final Wall wall;
+    private final CollisionType collisionType;
     private boolean isTrueCollision = true;
 
-    public Collision(double time, int particleA, int particleB, Wall wall) {
+    public Collision(double time, int particleA, int particleB, CollisionType collisionType) {
         this.time = time;
         this.particleA = particleA;
         this.particleB = particleB;
-        this.wall = wall;
+        this.collisionType = collisionType;
     }
 
-    public Collision(double time, int particleA, Wall wall, boolean isTrueCollision) {
+    public Collision(double time, int particleA, CollisionType collisionType, boolean isTrueCollision) {
         this.time = time;
         this.particleA = particleA;
-        this.wall = wall;
+        this.collisionType = collisionType;
         this.isTrueCollision = isTrueCollision;
     }
 
-    public Collision(double time, int particleA, Wall wall) {
+    public Collision(double time, int particleA, CollisionType collisionType) {
         this.time = time;
         this.particleA = particleA;
-        this.wall = wall;
+        this.collisionType = collisionType;
     }
 
     public int getId(){ return id; }
@@ -46,8 +46,8 @@ public class Collision implements Comparable<Collision> {
         return isTrueCollision;
     }
 
-    public Wall getWall() {
-        return wall;
+    public CollisionType getCollisionType() {
+        return collisionType;
     }
 
     public void setTime(double time) {
@@ -55,7 +55,7 @@ public class Collision implements Comparable<Collision> {
     }
 
     public boolean collisionWithWall(){
-        return wall != null;
+        return collisionType != null;
     }
 
     @Override
