@@ -226,34 +226,44 @@ public class Simulation {
     }
 
         // check
-    private void handleParticleCollision(Particle pA, Particle pB){
-        double dx = pB.getBallPositionX() - pA.getBallPositionX();
-        double dy = pB.getBallPositionY() - pA.getBallPositionY();
-        double distance = Math.sqrt(dx * dx + dy * dy);
+    private void handleParticleCollision(Particle a, Particle b) {
+        double dx = b.getBallPositionX() - a.getBallPositionX();
+        double dy = b.getBallPositionY() - a.getBallPositionY();
+        double dist = Math.hypot(dx, dy);
+        if (dist == 0.0) return; // o resolvé con un pequeño "separation" numérico
 
-        // Normal vector
-        double nx = dx / distance;
-        double ny = dy / distance;
+        // normal unitario línea-de-centros (de A hacia B)
+        double nx = dx / dist, ny = dy / dist;
 
-        // Relative velocity
-        double dvx = pB.getBallVelocityX() - pA.getBallVelocityX();
-        double dvy = pB.getBallVelocityY() - pA.getBallVelocityY();
+        // velocidad relativa
+        double dvx = b.getBallVelocityX() - a.getBallVelocityX();
+        double dvy = b.getBallVelocityY() - a.getBallVelocityY();
 
-        // Velocity along the normal
+        // componente normal de la relativa
         double vn = dvx * nx + dvy * ny;
 
-        // If particles are moving apart, do nothing
-        if (vn > 0) return;
+        // si se separan, no hay choque efectivo
+        if (vn >= 0) return;
 
-        // Impulse scalar
-        double impulse = -2 * vn / 2; // assuming equal mass
+        double mi = a.getBallMass();
+        double mj = b.getBallMass();
 
-        // Update velocities
-        pA.setBallVelocity(pA.getBallVelocityX() - impulse * nx, pA.getBallVelocityY() - impulse * ny);
-        pB.setBallVelocity(pB.getBallVelocityX() + impulse * nx, pB.getBallVelocityY() + impulse * ny);
+        // impulso escalar: J = -(2 μ vn), con μ = mi*mj/(mi+mj)
+        double J = -(2.0 * mi * mj / (mi + mj)) * vn;
 
-        logger.info("Colliding particle {} with particle {}", pA.getId(), pB.getId());
+        // actualizar velocidades: v' = v ± (J/m) * n
+        a.setBallVelocity(
+            a.getBallVelocityX() + (J / mi) * nx,
+            a.getBallVelocityY() + (J / mi) * ny
+        );
+        b.setBallVelocity(
+            b.getBallVelocityX() - (J / mj) * nx,
+            b.getBallVelocityY() - (J / mj) * ny
+        );
+
+        logger.info("Colliding particle {} with particle {}", a.getId(), b.getId());
     }
+
 
     /**
      * Resolves occurring collision. Analyses if wall collision or particle collision occur.
