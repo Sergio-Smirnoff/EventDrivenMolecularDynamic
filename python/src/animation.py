@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from src.file_reader import leer_header, leer_frames
+from file_reader import leer_header, leer_frames
 import numpy as np
 from pathlib import Path
 
