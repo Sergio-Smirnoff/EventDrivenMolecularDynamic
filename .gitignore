@@ -23,4 +23,7 @@
 hs_err_pid*
 replay_pid*
 
+.vscode
+.idea
 __pycache__/
+target/

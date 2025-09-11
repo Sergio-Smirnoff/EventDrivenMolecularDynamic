@@ -1,5 +1,5 @@
 
-package models;
+package org.models;
 
 import java.util.PriorityQueue;
 
@@ -26,22 +26,9 @@ public class Particle {
         this.ballVelocityY = velocityY;
     }
 
-    public int getId(){
-        return id;
-    }
-
-    public void setBallPosition(double ballPositionX, double ballPositionY) {
-        this.ballPositionX = ballPositionX;
-        this.ballPositionY = ballPositionY;
-    }
-
-    public void setBallVelocity(double ballVelocityX, double ballVelocityY) {
-        this.ballVelocityX = ballVelocityX;
-        this.ballVelocityY = ballVelocityY;
-    }
-
     public void addCollision(Collision collision) {
-        collisions.add(collision);
+        if(collision != null)
+            collisions.add(collision);
     }
 
     public void clearCollisions() {
@@ -49,15 +36,17 @@ public class Particle {
     }
 
     public Collision getNextCollision() {
-        return collisions.poll();
+        return collisions.peek();
     }
 
     public boolean hasCollisions() {
         return !collisions.isEmpty();
     }
 
-    public void removeCollisionWithParticle(int id){
-        collisions.removeIf(collision -> collision.getParticleB().getId() == id);
+    /* ------------------------ Getters  ------------------------ */
+
+    public int getId(){
+        return id;
     }
 
     public PriorityQueue<Collision> getCollisions() {
@@ -88,4 +77,15 @@ public class Particle {
         return ballPositionY;
     }
 
+    /* ------------------------ Setters  ------------------------ */
+
+    public void setBallPosition(double ballPositionX, double ballPositionY) {
+        this.ballPositionX = ballPositionX;
+        this.ballPositionY = ballPositionY;
+    }
+
+    public void setBallVelocity(double ballVelocityX, double ballVelocityY) {
+        this.ballVelocityX = ballVelocityX;
+        this.ballVelocityY = ballVelocityY;
+    }
 }
