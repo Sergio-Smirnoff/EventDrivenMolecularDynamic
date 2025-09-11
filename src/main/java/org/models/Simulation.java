@@ -162,6 +162,7 @@ public class Simulation {
                 } else if (inBoxB) {
                     newX = 2 * width - ballRadius;
                 }
+                // x == 0.0885 or 0.0915
             }else{
                 if(inBoxA){
                     newX = ballRadius;
