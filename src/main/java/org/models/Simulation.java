@@ -390,8 +390,8 @@ public class Simulation {
         boolean inLeftBox = p.getBallPositionX() < (width - ballRadius - EPS);
 
         // alturas válidas según el box
-        double yBottom = inLeftBox ? 0.0 + ballRadius : bottomWallB + ballRadius;
-        double yTop    = inLeftBox ? heightFirstBox - ballRadius : topWallB - ballRadius;
+        double yBottom = inLeftBox ? 0.0 : bottomWallB;
+        double yTop    = inLeftBox ? heightFirstBox : topWallB;
 
         double t = Double.POSITIVE_INFINITY;
 
