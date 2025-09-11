@@ -63,7 +63,13 @@ def leer_frames(path: str):
             i += 1
             continue
 
-        event_pid = int(parts[1]) if len(parts) > 1 else None
+        event_pid = None
+
+        if len(parts) == 2:
+            event_pid = [int(parts[1])]
+        if len(parts) == 3:
+            event_pid = [int(parts[1]), int(parts[2])]
+            
         i += 1
 
         if i < len(lines) and hdr_cols.match(lines[i]):
