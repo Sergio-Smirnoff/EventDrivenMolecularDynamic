@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 public class Simulation {
 
     private final double scale = 100000;
+    
     private final double heightFirstBox = 0.09 * scale;
     private final double width = 0.09 * scale;
     private final double heightSecondBox;
@@ -384,25 +385,24 @@ public class Simulation {
     private Collision timeToHorizontalWall(Particle p) {
         double y  = p.getBallPositionY();
         double vy = p.getBallVelocityY();
-        double R  = p.getBallRadius();
 
         // ¿en qué “box” está? (margen para evitar flicker en el borde vertical)
-        boolean inLeftBox = p.getBallPositionX() < (width - R - EPS);
+        boolean inLeftBox = p.getBallPositionX() < (width - ballRadius - EPS);
 
         // alturas válidas según el box
-        double yBottom = inLeftBox ? 0.0 : bottomWallB;
-        double yTop    = inLeftBox ? heightFirstBox : topWallB;
+        double yBottom = inLeftBox ? 0.0 + ballRadius : bottomWallB + ballRadius;
+        double yTop    = inLeftBox ? heightFirstBox - ballRadius : topWallB - ballRadius;
 
         double t = Double.POSITIVE_INFINITY;
 
         if (vy > EPS) { // sube → pared superior
-            double contactY = yTop - R;
+            double contactY = yTop - ballRadius;
             // si ya está tocando o levemente pasado, no programes un choque futuro
             if (y < contactY - EPS) {
                 t = (contactY - y) / vy; // > 0 garantizado
             }
         } else if (vy < -EPS) { // baja → pared inferior
-            double contactY = yBottom + R;
+            double contactY = yBottom + ballRadius;
             if (y > contactY + EPS) {
                 t = (contactY - y) / vy; // > 0 porque vy < 0
             }
