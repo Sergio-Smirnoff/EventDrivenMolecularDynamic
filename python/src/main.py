@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from src import data_analysis   # pressure/diffusion functions
-from src.animation import animate  # your separate animation module
+from src import data_analysis
+from src.animation import animate
 
 class PressureDiffusionApp(tk.Tk):
     def __init__(self):
