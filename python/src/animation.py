@@ -33,6 +33,10 @@ def animate(filename, save_as=None, print_data=False, print_first_k=5):
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
 
+    # Debug lines
+    ax.plot([square_size - ball_radius, square_size - ball_radius], [0, square_size], color='green', linewidth=0.5, linestyle='--')
+    ax.plot([square_size + ball_radius, square_size + ball_radius], [0, square_size], color='green', linewidth=0.5, linestyle='--')
+
     ax.plot([0, 0], [0, square_size], color='black', linewidth=1)
     ax.plot([0, square_size], [0, 0], color='black', linewidth=1)
     ax.plot([0, square_size], [square_size, square_size], color='black', linewidth=1)
