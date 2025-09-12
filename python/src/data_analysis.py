@@ -2,6 +2,53 @@ import numpy as np
 import matplotlib.pyplot as plt
 from src.file_reader import leer_header, leer_frames
 from scipy.optimize import curve_fit
+# TODO agregar error, puntos, y agregar algunos labels.
+
+def manual_linear_fit(x_data, y_data):
+    sum_xy = np.sum(x_data * y_data)
+    sum_x_squared = np.sum(x_data**2)
+    
+    if sum_x_squared == 0:
+        return 0, 0
+        
+    c = sum_xy / sum_x_squared
+    
+    y_predicted = c * x_data
+    residuals = y_data - y_predicted
+    n = len(x_data)
+    if n > 1:
+        error = np.sqrt(np.sum(residuals**2) / (n - 1))
+    else:
+        error = 0
+
+    return c, error
+
+def modelo_diff(t, D):
+    return 4 * D * t
+
+def manual_diffusion_fit(t, msd):
+    if len(t) > 0 and t[0] == 0:
+        t = t[1:]
+        msd = msd[1:]
+    
+    sum_t_msd = np.sum(t * msd)
+    sum_t_squared = np.sum(t**2)
+    
+    if sum_t_squared == 0:
+        return 0, 0
+
+    slope_m = sum_t_msd / sum_t_squared
+    D = slope_m / 4.0
+
+    msd_predicted = 4 * D * t
+    residuals = msd - msd_predicted
+    n = len(t)
+    if n > 1:
+        rmse = np.sqrt(np.sum(residuals**2) / (n - 1))
+    else:
+        rmse = 0
+        
+    return D, rmse
 
 # Presiones vs Tiempo
 # The interval is the time window to compute pressure for each box
@@ -162,14 +209,15 @@ def modelo(A_inv, c):
     return c * A_inv
 
 def ajuste_presion_vs_area(A_inv, P_means):
-    popt, pcov = curve_fit(modelo, A_inv, P_means)
-    c = popt[0]
+    c_manual, rmse = manual_linear_fit(A_inv, P_means)
 
     A_inv_fit = np.linspace(min(A_inv), max(A_inv), 100)
-    P_fit = modelo(A_inv_fit, c)
+    P_fit_manual = modelo(A_inv_fit, c_manual)
 
-    plt.scatter(A_inv, P_means, label="Datos simulación")
-    plt.plot(A_inv_fit, P_fit, "--", label=f"Ajuste P = c/A, c={c:.3e}")
+    plt.scatter(A_inv, P_means, color='blue', zorder=5, label="Datos de simulación")
+    plt.plot(A_inv_fit, P_fit_manual, "--", color='red', 
+             label=f"Ajuste Manual: P = c/A\n$c={c_manual:.3e}$ (RMSE={rmse:.3e})")
+    
     plt.xlabel("1/Área [1/m²]")
     plt.ylabel("Presión promedio [Pa]")
     plt.grid()
@@ -192,22 +240,21 @@ def difusion(filename):
     tiempos = np.array(tiempos)
     msd = np.array(msd)
 
-    def modelo_diff(t, D):
-        return 4 * D * t
+    D_manual, rmse = manual_diffusion_fit(tiempos, msd)
+    print(f"Manual Fit: Coeficiente de difusión D ≈ {D_manual:.6e} m²/s (RMSE={rmse:.4e})")
 
-    popt, _ = curve_fit(modelo_diff, tiempos, msd)
-    D = popt[0]
-    print(f"Coeficiente de difusión D ≈ {D:.6e} m²/s")
-
-    plt.xscale('log')
-    plt.yscale('log')
-    plt.plot(tiempos, msd, label="MSD")
-    plt.plot(tiempos, modelo_diff(tiempos, D),
-             "--", label=f"Ajuste lineal (D={D:.4e})")
-    plt.xlabel("Tiempo [s]")
-    plt.ylabel("MSD [m²]")
+    plt.figure(figsize=(10, 6))
+    
+    plt.scatter(tiempos, msd, s=10, alpha=0.7, label="Datos MSD (Simulación)")
+    plt.plot(tiempos, modelo_diff(tiempos, D_manual),
+             color="red", linestyle="--", label=f"Ajuste Manual (D={D_manual:.4e})")
+    
+    plt.title("MSD vs. Tiempo (Ajuste Manual)")
+    plt.xlabel("Tiempo (s)")
+    plt.ylabel("MSD ($m^2$)")
+    plt.grid(True, linestyle='--', linewidth=0.5)
     plt.legend()
-    plt.grid()
+    plt.tight_layout()
     plt.show()
 
 
