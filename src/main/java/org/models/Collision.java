@@ -59,7 +59,7 @@ public class Collision implements Comparable<Collision> {
     }
 
     public boolean collisionWithWall(){
-        return collisionType != null;
+        return collisionType == CollisionType.HORIZONTAL || collisionType == CollisionType.VERTICAL;
     }
 
     @Override

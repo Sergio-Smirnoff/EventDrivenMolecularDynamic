@@ -91,7 +91,6 @@ public class Simulation {
         }
     }
 
-    // colison =>  => limpiar => recalcular =>  hacer colision => next colision
 
 
     /**
@@ -126,12 +125,11 @@ public class Simulation {
         }
 
         for (Particle p : particles) {
+
             double newX = p.getBallPositionX() + p.getBallVelocityX() * timeSkip;
             double newY = p.getBallPositionY() + p.getBallVelocityY() * timeSkip;
             p.setBallPosition(newX, newY);
             for (Collision c : p.getCollisions()) {
-                logger.debug("Advancing particle {}: particle time {} - time skip {}", p.getId(), c.getTime(), timeSkip);
-
                 c.setTime(c.getTime() - timeSkip);
                 if(c.collisionWithWall()){
                     logger.info("new collision with wall time {} for particle {}", c.getTime(), p.getId());
@@ -307,24 +305,8 @@ public class Simulation {
      */
     private void calculateInitialCollisions() {
         for (Particle particle : particles) {
-            // Collisions with walls
-            particle.addCollision(timeToVerticalWall(particle));
-            particle.addCollision(timeToHorizontalWall(particle));
-
-            // Collisions with other particles
-            for (Particle other : particles) {
-                if (other.getId() == particle.getId()) continue; // Skip self-collision
-                double dx = other.getBallPositionX() - particle.getBallPositionX();
-                double dy = other.getBallPositionY() - particle.getBallPositionY();
-                double distance = Math.sqrt(dx * dx + dy * dy);
-                double time = timeToCollision(particle, other);
-                if (time != Double.POSITIVE_INFINITY && time >= 0) {
-                    Collision collision = new Collision(time, particle.getId(), other.getId(), CollisionType.PARTICLE);
-                    Collision secondColl = new Collision(time, other.getId(), particle.getId(), CollisionType.PARTICLE);
-                    particle.addCollision(collision);
-                    other.addCollision(secondColl);
-                }
-            }
+            // thread
+            calculateParticleCollisions(particle);
         }
     }
 
@@ -337,12 +319,13 @@ public class Simulation {
         // Collisions with walls
         Collision collisionVertical = timeToVerticalWall(particle);
         Collision collisionHorizontal = timeToHorizontalWall(particle);
-        if(Math.abs(collisionVertical.getTime() - collisionHorizontal.getTime()) < EPS){
+        if(Math.abs(collisionVertical.getTime() - collisionHorizontal.getTime()) > EPS){
+            particle.addCollision(collisionVertical);
+            particle.addCollision(collisionHorizontal);
+        }else{
             collisionVertical.setCollisionType(CollisionType.VERTEX);
             particle.addCollision(collisionVertical);
         }
-        particle.addCollision(timeToVerticalWall(particle));
-        particle.addCollision(timeToHorizontalWall(particle));
 
         // Collisions with other particles
         for (Particle other : particles) {
