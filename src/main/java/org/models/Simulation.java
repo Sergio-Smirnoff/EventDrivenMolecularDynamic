@@ -238,6 +238,7 @@ public class Simulation {
             double dx = b.getBallPositionX() - a.getBallPositionX();
             double dy = b.getBallPositionY() - a.getBallPositionY();
             double dist = Math.hypot(dx, dy);
+            logger.info("distance between particles {} and {}: {}", a.getId(), b.getId(), dist);
             if (dist == 0.0) return;
 
             double nx = dx / dist, ny = dy / dist;
