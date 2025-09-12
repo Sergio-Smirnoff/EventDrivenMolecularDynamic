@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from src.file_reader import leer_header, leer_frames
-from scipy.optimize import curve_fit
 
 def manual_linear_fit(x_data, y_data):
     sum_xy = np.sum(x_data * y_data)
