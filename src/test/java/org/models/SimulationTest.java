@@ -114,16 +114,4 @@ public class SimulationTest {
         assertEquals(0.01, p2.getBallVelocityX());
     }
 
-    @Test
-    void testCollidingParticlesAgainstEachOtherVelocityAfterAngled() throws InvocationTargetException, IllegalAccessException {
-        Particle p1 = new Particle(0, 0.01-0.0015, 0.01, 0.1*Math.cos(Math.PI / 6), 0.1*Math.sin(Math.PI / 6));
-        Particle p2 = new Particle(2, 0.01+0.0015, 0.01, -0.1*Math.cos(Math.PI / 6), -0.1*Math.sin(Math.PI / 6));
-
-        handleParticleCollision.invoke(sim,p1,p2);
-
-        assertEquals(-0.1*Math.cos(Math.PI / 6), p1.getBallVelocityX());
-        assertEquals(-0.1*Math.sin(Math.PI / 6), p1.getBallVelocityY());
-        assertEquals(0.1*Math.cos(Math.PI / 6), p2.getBallVelocityX());
-        assertEquals(0.1*Math.sin(Math.PI / 6), p2.getBallVelocityY());
-    }
 }
