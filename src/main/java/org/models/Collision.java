@@ -5,7 +5,7 @@ public class Collision implements Comparable<Collision> {
     private double time; // Time until collision occurs
     private int particleA = -1; // Main Particle id
     private int particleB = -1; // Collision with id
-    private final CollisionType collisionType;
+    private CollisionType collisionType;
     private boolean isTrueCollision = true;
 
     public Collision(double time, int particleA, int particleB, CollisionType collisionType) {
@@ -52,6 +52,10 @@ public class Collision implements Comparable<Collision> {
 
     public void setTime(double time) {
         this.time = time;
+    }
+
+    public void setCollisionType(CollisionType collisionType) {
+        this.collisionType = collisionType;
     }
 
     public boolean collisionWithWall(){
