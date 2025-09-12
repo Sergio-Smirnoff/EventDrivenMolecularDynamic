@@ -14,16 +14,22 @@ public class SimulationTest {
     private Simulation sim;
     private Method timeToVerticalWall;
     private Method timeToHorizontalWall;
+    private Method timeToCollision;
+    private Method handleParticleCollision;
 
     @BeforeEach
     void setUp() throws NoSuchMethodException{
         sim = new Simulation(0.06, 1);
         timeToVerticalWall = Simulation.class.getDeclaredMethod("timeToVerticalWall", Particle.class);
         timeToHorizontalWall = Simulation.class.getDeclaredMethod("timeToHorizontalWall", Particle.class);
+        timeToCollision = Simulation.class.getDeclaredMethod("timeToCollision", Particle.class, Particle.class);
+        handleParticleCollision = Simulation.class.getDeclaredMethod("handleParticleCollision", Particle.class, Particle.class);
 
         // Allow access to the private methods
         timeToVerticalWall.setAccessible(true);
         timeToHorizontalWall.setAccessible(true);
+        timeToCollision.setAccessible(true);
+        handleParticleCollision.setAccessible(true);
     }
 
     /* --------------------- Vertical Wall Collision Cases --------------------- */
@@ -38,7 +44,7 @@ public class SimulationTest {
         // Then the collision time and wall type should be correct
         assertNotNull(collision);
         assertEquals(expectedTime, collision.getTime(), 1e-5);
-        assertEquals(Wall.VERTICAL, collision.getWall());
+        assertEquals(CollisionType.VERTICAL, collision.getCollisionType());
     }
 
     @Test
@@ -48,7 +54,7 @@ public class SimulationTest {
         Collision collision = (Collision) timeToVerticalWall.invoke(sim, particle);
 
         assertNotNull(collision);
-        assertEquals(Wall.VERTICAL, collision.getWall());
+        assertEquals(CollisionType.VERTICAL, collision.getCollisionType());
         assertFalse(collision.isTrueCollision());
         assertEquals(0.085, collision.getTime(), 1e-5);
     }
@@ -67,7 +73,7 @@ public class SimulationTest {
         // Then the collision time and wall type should be correct
         assertNotNull(collision);
         assertEquals(expectedTime, collision.getTime(), 1e-5);
-        assertEquals(Wall.HORIZONTAL, collision.getWall());
+        assertEquals(CollisionType.HORIZONTAL, collision.getCollisionType());
     }
 
     @Test
@@ -77,8 +83,35 @@ public class SimulationTest {
         Collision collision = (Collision) timeToHorizontalWall.invoke(sim, particle);
 
         assertNotNull(collision);
-        assertEquals(Wall.HORIZONTAL, collision.getWall());
+        assertEquals(CollisionType.HORIZONTAL, collision.getCollisionType());
         assertTrue(collision.isTrueCollision());
         assertEquals(0.57, collision.getTime(), 1e-5);
     }
+
+
+    /* --------------------- Particle Wall Collision Cases --------------------- */
+
+    @Test
+    void testTimeOfCollidingParticlesAgainstEachOther() throws InvocationTargetException, IllegalAccessException {
+        Particle p1 = new Particle(0, 0.01, 0.01, 0.01, 0);
+        Particle p2 = new Particle(2, 0.02, 0.01, -0.01, 0);
+
+        Double collisionTime = (Double) timeToCollision.invoke(sim, p1, p2);
+
+        assertNotNull(collisionTime);
+        assertEquals(0.35, collisionTime, 1e-5);
+        assertEquals(0.0001, Math.pow(p1.getBallVelocityX(), 2) + Math.pow(p1.getBallVelocityY(), 2), 1e-5);
+    }
+
+    @Test
+    void testCollidingParticlesAgainstEachOtherVelocityAfter() throws InvocationTargetException, IllegalAccessException {
+        Particle p1 = new Particle(0, 0.01-0.0015, 0.01, 0.01, 0);
+        Particle p2 = new Particle(2, 0.01+0.0015, 0.01, -0.01, 0);
+
+        handleParticleCollision.invoke(sim,p1,p2);
+
+        assertEquals(-0.01, p1.getBallVelocityX());
+        assertEquals(0.01, p2.getBallVelocityX());
+    }
+
 }
