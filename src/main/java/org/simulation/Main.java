@@ -10,10 +10,10 @@ public class Main {
         Locale.setDefault(Locale.US);
 
         double heightSecondBox = 0.03;
-        int particlesCount = 300;
+        int particlesCount = 200;
 
         Simulation simulation = new Simulation(heightSecondBox, particlesCount);
-        simulation.runSimulation(10000, String.format("initial_state_%.2f.csv", heightSecondBox));
+        simulation.runSimulation(2000, String.format("initial_state_%.2f.csv", heightSecondBox));
     }
 
 }
