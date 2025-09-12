@@ -121,8 +121,6 @@ def presion_promedio(P_A_list, P_B_list):
     return pA_mean, pB_mean
 
 def plot_presion_vs_L(L_values, P_means_A, P_means_B):
-    plt.xscale('log')
-    plt.yscale('log')
     plt.scatter(L_values, P_means_A, label="Caja A")
     plt.scatter(L_values, P_means_B, label="Caja B")
     plt.xlabel("Longitud L [m]")
@@ -151,8 +149,6 @@ def presion_vs_area(files):
 
     P_means, A_inv = np.array(P_means), np.array(A_inv)
 
-    plt.xscale('log')
-    plt.yscale('log')
     plt.scatter(A_inv, P_means, label="Datos simulación")
     plt.xlabel("1/Área [1/m²]")
     plt.ylabel("Presión promedio [Pa]")
@@ -172,8 +168,6 @@ def ajuste_presion_vs_area(A_inv, P_means):
     A_inv_fit = np.linspace(min(A_inv), max(A_inv), 100)
     P_fit = modelo(A_inv_fit, c)
 
-    plt.xscale('log')
-    plt.yscale('log')
     plt.scatter(A_inv, P_means, label="Datos simulación")
     plt.plot(A_inv_fit, P_fit, "--", label=f"Ajuste P = c/A, c={c:.3e}")
     plt.xlabel("1/Área [1/m²]")
