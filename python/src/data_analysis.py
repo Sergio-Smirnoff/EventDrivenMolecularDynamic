@@ -32,6 +32,8 @@ def presiones_vs_t(filename, interval=0.8):
     total_area_B = sum(wall_lengths[w] for w in ["B_right", "B_top", "B_bottom"])
 
     tiempos = [0.0]
+    tiempos_A = [0.0]
+    tiempos_B = [0.0]
     P_A_list = [0.0]
     P_B_list = [0.0]
 
@@ -58,24 +60,33 @@ def presiones_vs_t(filename, interval=0.8):
         # Decide which wall was collided with
         if p_id is not None:
             p = particles[p_id[0]]
-            if p.x <= 0 + particle_radius:
-                walls["A_left"] += 2 * abs(p.vx)
-            if p.y <= 0 + particle_radius:
-                walls["A_bottom"] += 2 * abs(p.vy)
-            if p.y >= box_A_size - particle_radius:
-                walls["A_top"] += 2 * abs(p.vy)
-            if p.x >= box_A_size - particle_radius:
-                if p.y <= bottomB + particle_radius:
-                    walls["A_right_bottom_segment"] += 2 * abs(p.vx)
+            if p.x <= box_A_size - particle_radius:
+                if p.x <= 0 + particle_radius:
+                    walls["A_left"] += 2 * abs(p.vx)
+                    tiempos_A.append(t)
+                elif p.y <= 0 + particle_radius:
+                    walls["A_bottom"] += 2 * abs(p.vy)
+                    tiempos_A.append(t)
+                elif p.y >= box_A_size - particle_radius:
+                    walls["A_top"] += 2 * abs(p.vy)
+                    tiempos_A.append(t)
+                elif p.x <= box_A_size - particle_radius:
+                    if p.y <= bottomB + particle_radius:
+                        walls["A_right_bottom_segment"] += 2 * abs(p.vx)
+                        tiempos_A.append(t)
+                    elif p.y >= topB - particle_radius:
+                        walls["A_right_top_segment"] += 2 * abs(p.vx)
+                        tiempos_A.append(t)
+            elif p.x >= box_A_size + particle_radius:
+                if p.x >= box_A_size + box_B_width - particle_radius:
+                    walls["B_right"] += 2 * abs(p.vx)
+                    tiempos_B.append(t)
+                elif p.y <= bottomB + particle_radius:
+                    walls["B_bottom"] += 2 * abs(p.vy)
+                    tiempos_B.append(t)
                 elif p.y >= topB - particle_radius:
-                    walls["A_right_top_segment"] += 2 * abs(p.vx)
-
-            if p.x >= box_A_size + box_B_width - particle_radius:
-                walls["B_right"] += 2 * abs(p.vx)
-            if p.y <= bottomB + particle_radius:
-                walls["B_bottom"] += 2 * abs(p.vy)
-            if p.y >= topB - particle_radius:
-                walls["B_top"] += 2 * abs(p.vy)
+                    walls["B_top"] += 2 * abs(p.vy)
+                    tiempos_B.append(t)
 
     # Clean up loop
     if any(v != 0 for v in walls.values()):
@@ -93,11 +104,8 @@ def presiones_vs_t(filename, interval=0.8):
 
 def plot_presiones_vs_t(filename, interval=0.8):
     tiempos, P_A_list, P_B_list = presiones_vs_t(filename, interval)
-
     plt.plot(tiempos, P_A_list, label="Caja A")
     plt.plot(tiempos, P_B_list, label="Caja B")
-    plt.xscale('log')
-    plt.yscale('log')
     plt.xlabel("Tiempo [s]")
     plt.ylabel("Presión [Pa]")
     plt.legend()
@@ -113,8 +121,6 @@ def presion_promedio(P_A_list, P_B_list):
     return pA_mean, pB_mean
 
 def plot_presion_vs_L(L_values, P_means_A, P_means_B):
-    plt.xscale('log')
-    plt.yscale('log')
     plt.scatter(L_values, P_means_A, label="Caja A")
     plt.scatter(L_values, P_means_B, label="Caja B")
     plt.xlabel("Longitud L [m]")
@@ -143,8 +149,6 @@ def presion_vs_area(files):
 
     P_means, A_inv = np.array(P_means), np.array(A_inv)
 
-    plt.xscale('log')
-    plt.yscale('log')
     plt.scatter(A_inv, P_means, label="Datos simulación")
     plt.xlabel("1/Área [1/m²]")
     plt.ylabel("Presión promedio [Pa]")
@@ -164,8 +168,6 @@ def ajuste_presion_vs_area(A_inv, P_means):
     A_inv_fit = np.linspace(min(A_inv), max(A_inv), 100)
     P_fit = modelo(A_inv_fit, c)
 
-    plt.xscale('log')
-    plt.yscale('log')
     plt.scatter(A_inv, P_means, label="Datos simulación")
     plt.plot(A_inv_fit, P_fit, "--", label=f"Ajuste P = c/A, c={c:.3e}")
     plt.xlabel("1/Área [1/m²]")
