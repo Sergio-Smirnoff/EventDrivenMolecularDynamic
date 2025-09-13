@@ -1,7 +1,52 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from src.file_reader import leer_header, leer_frames
-from scipy.optimize import curve_fit
+
+def manual_linear_fit(x_data, y_data):
+    sum_xy = np.sum(x_data * y_data)
+    sum_x_squared = np.sum(x_data**2)
+    
+    if sum_x_squared == 0:
+        return 0, 0
+        
+    c = sum_xy / sum_x_squared
+    
+    y_predicted = c * x_data
+    residuals = y_data - y_predicted
+    n = len(x_data)
+    if n > 1:
+        error = np.sqrt(np.sum(residuals**2) / (n - 1))
+    else:
+        error = 0
+
+    return c, error
+
+def modelo_diff(t, D):
+    return 4 * D * t
+
+def manual_diffusion_fit(t, msd):
+    if len(t) > 0 and t[0] == 0:
+        t = t[1:]
+        msd = msd[1:]
+    
+    sum_t_msd = np.sum(t * msd)
+    sum_t_squared = np.sum(t**2)
+    
+    if sum_t_squared == 0:
+        return 0, 0
+
+    slope_m = sum_t_msd / sum_t_squared
+    D = slope_m / 4.0
+
+    msd_predicted = 4 * D * t
+    residuals = msd - msd_predicted
+    n = len(t)
+    if n > 1:
+        rmse = np.sqrt(np.sum(residuals**2) / (n - 1))
+    else:
+        rmse = 0
+        
+    return D, rmse
 
 # Presiones vs Tiempo
 # The interval is the time window to compute pressure for each box
@@ -108,8 +153,8 @@ def plot_presiones_vs_t(filename, interval=0.8):
     plt.plot(tiempos, P_B_list, label="Caja B")
     plt.xlabel("Tiempo [s]")
     plt.ylabel("Presión [Pa]")
+    plt.tight_layout()
     plt.legend()
-    plt.grid()
     plt.show()
 
     return tiempos, P_A_list, P_B_list
@@ -120,17 +165,37 @@ def presion_promedio(P_A_list, P_B_list):
 
     return pA_mean, pB_mean
 
-def plot_presion_vs_L(L_values, P_means_A, P_means_B):
-    plt.scatter(L_values, P_means_A, label="Caja A")
-    plt.scatter(L_values, P_means_B, label="Caja B")
+def plot_presion_vs_L(files):
+    L_values, P_means, P_errors = [], [], []
+
+    for fname in files:
+        N, L = leer_header(fname)
+        tiempos, P_A_list, P_B_list = presiones_vs_t(fname)
+
+        pA_mean, pB_mean = presion_promedio(P_A_list, P_B_list)
+
+        P_total_list = P_A_list + P_B_list
+        P_std_dev = np.std(P_total_list)
+
+        L_values.append(L)
+        P_mean_ = 0.5 * (pA_mean + pB_mean)
+        P_means.append(P_mean_)
+        P_errors.append(P_std_dev) 
+    plt.figure(figsize=(10, 6))
+    plt.errorbar(L_values, P_means, yerr=P_errors, fmt='o', color='blue',
+                 ecolor='lightblue', capsize=5, label="Presión Promedio")
+    
     plt.xlabel("Longitud L [m]")
     plt.ylabel("Presión promedio [Pa]")
-    plt.grid(True)
     plt.legend()
+    plt.tight_layout()
     plt.show()
 
+    return L_values, P_means, P_errors
+
+
 def presion_vs_area(files):
-    P_means, A_inv = [], []
+    P_means, A_inv, P_errors = [], [], []
 
     for fname in files:
         N, L = leer_header(fname)
@@ -139,40 +204,53 @@ def presion_vs_area(files):
 
         pA_mean, pB_mean = presion_promedio(P_A_list, P_B_list)
         
+        P_total_list = P_A_list + P_B_list
+        P_std_dev = np.std(P_total_list)
+        
         area_A = 0.09 * 0.09
         area_B = 0.09 * L
         A_total = area_A + area_B
         
         P_mean = 0.5 * (pA_mean + pB_mean)
+        
         P_means.append(P_mean)
         A_inv.append(1.0 / A_total)
+        P_errors.append(P_std_dev) 
 
-    P_means, A_inv = np.array(P_means), np.array(A_inv)
+    P_means = np.array(P_means)
+    A_inv = np.array(A_inv)
+    P_errors = np.array(P_errors)
 
-    plt.scatter(A_inv, P_means, label="Datos simulación")
+    plt.figure(figsize=(10, 6))
+    plt.errorbar(A_inv, P_means, yerr=P_errors, fmt='o', color='blue', 
+                 ecolor='lightblue', capsize=5, label="Datos de simulación")
+    
     plt.xlabel("1/Área [1/m²]")
     plt.ylabel("Presión promedio [Pa]")
-    plt.grid()
+    plt.tight_layout()
     plt.legend()
     plt.show()
 
-    return A_inv, P_means
+    return A_inv, P_means, P_errors
 
 def modelo(A_inv, c):
     return c * A_inv
 
-def ajuste_presion_vs_area(A_inv, P_means):
-    popt, pcov = curve_fit(modelo, A_inv, P_means)
-    c = popt[0]
+def ajuste_presion_vs_area(A_inv, P_means, P_errors):
+    c_manual, rmse = manual_linear_fit(A_inv, P_means)
 
     A_inv_fit = np.linspace(min(A_inv), max(A_inv), 100)
-    P_fit = modelo(A_inv_fit, c)
+    P_fit_manual = modelo(A_inv_fit, c_manual)
 
-    plt.scatter(A_inv, P_means, label="Datos simulación")
-    plt.plot(A_inv_fit, P_fit, "--", label=f"Ajuste P = c/A, c={c:.3e}")
+    plt.errorbar(A_inv, P_means, yerr=P_errors, fmt='o', color='blue', 
+                 ecolor='lightblue', capsize=5, label="Datos de simulación")
+    
+    plt.plot(A_inv_fit, P_fit_manual, "--", color='red', 
+             label=f"Ajuste Manual: P = c/A\n$c={c_manual:.3e}$ (RMSE={rmse:.3e})")
+    
     plt.xlabel("1/Área [1/m²]")
     plt.ylabel("Presión promedio [Pa]")
-    plt.grid()
+    plt.tight_layout()
     plt.legend()
     plt.show()
 
@@ -192,22 +270,20 @@ def difusion(filename):
     tiempos = np.array(tiempos)
     msd = np.array(msd)
 
-    def modelo_diff(t, D):
-        return 4 * D * t
+    D_manual, rmse = manual_diffusion_fit(tiempos, msd)
 
-    popt, _ = curve_fit(modelo_diff, tiempos, msd)
-    D = popt[0]
-    print(f"Coeficiente de difusión D ≈ {D:.6e} m²/s")
-
+    plt.figure(figsize=(10, 6))
+    
+    plt.scatter(tiempos, msd, s=10, alpha=0.7, label="Datos MSD (Simulación)")
+    plt.plot(tiempos, modelo_diff(tiempos, D_manual),
+             color="red", linestyle="--", label=f"Ajuste Manual (D={D_manual:.4e})")
+    
     plt.xscale('log')
     plt.yscale('log')
-    plt.plot(tiempos, msd, label="MSD")
-    plt.plot(tiempos, modelo_diff(tiempos, D),
-             "--", label=f"Ajuste lineal (D={D:.4e})")
-    plt.xlabel("Tiempo [s]")
-    plt.ylabel("MSD [m²]")
+    plt.xlabel("Tiempo (s)")
+    plt.ylabel("MSD ($m^2$)")
     plt.legend()
-    plt.grid()
+    plt.tight_layout()
     plt.show()
 
 

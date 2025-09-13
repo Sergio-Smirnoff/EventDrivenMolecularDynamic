@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from src import data_analysis   # pressure/diffusion functions
-from src.animation import animate  # your separate animation module
+from src import data_analysis
+from src.animation import animate
 
 class PressureDiffusionApp(tk.Tk):
     def __init__(self):
@@ -28,6 +28,9 @@ class PressureDiffusionApp(tk.Tk):
         self.pressure_btn.pack(pady=5)
 
         self.area_btn = tk.Button(self, text="Presión promedio vs área", command=self.run_pressure_vs_area)
+        self.area_btn.pack(pady=5)
+
+        self.area_btn = tk.Button(self, text="Presión promedio vs L", command=self.run_pressure_vs_L)
         self.area_btn.pack(pady=5)
 
         self.diffusion_btn = tk.Button(self, text="Calcular difusión (MSD)", command=self.run_diffusion)
@@ -62,8 +65,15 @@ class PressureDiffusionApp(tk.Tk):
             messagebox.showwarning("Error", "Selecciona primero los archivos CSV")
             return
 
-        A_inv, P_means = data_analysis.presion_vs_area(self.files)
-        data_analysis.ajuste_presion_vs_area(A_inv, P_means)
+        A_inv, P_means, P_errors = data_analysis.presion_vs_area(self.files)
+        data_analysis.ajuste_presion_vs_area(A_inv, P_means, P_errors)
+
+    def run_pressure_vs_L(self):
+        if not self.files:
+            messagebox.showwarning("Error", "Selecciona primero los archivos CSV")
+            return
+        data_analysis.plot_presion_vs_L(self.files)
+
 
     def run_diffusion(self):
         if not self.files:
