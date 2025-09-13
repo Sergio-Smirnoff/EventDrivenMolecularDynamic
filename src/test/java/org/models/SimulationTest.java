@@ -1,13 +1,15 @@
 package org.models;
 
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SimulationTest {
 
@@ -114,4 +116,18 @@ public class SimulationTest {
         assertEquals(0.01, p2.getBallVelocityX());
     }
 
+    @Test
+    void NoMansLandEdgeCase_FromAtoB_ShouldTargetBoxATopWall() throws InvocationTargetException, IllegalAccessException {
+        double width = 0.09;
+        double ballRadius = 0.0015;
+
+        Particle particle = new Particle(0, width + (0.5 * ballRadius), 0.4, -0.01, 0.01);
+
+        double expectedTime = 3.85;
+        Collision collision = (Collision) timeToHorizontalWall.invoke(sim, particle);
+        assertNotNull(collision);
+        assertEquals(CollisionType.HORIZONTAL, collision.getCollisionType());
+        assertTrue(collision.isTrueCollision());
+        assertEquals(expectedTime, collision.getTime(), 1e-5);
+    }
 }
