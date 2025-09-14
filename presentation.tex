@@ -8,7 +8,7 @@
 \author{Grupo 5}
 \institute{ITBA}
 \date{} % sin fecha
-
+\setbeamertemplate{headline}[miniframes theme]
 % Numerar diapositivas
 \setbeamertemplate{footline}[frame number]
 
@@ -25,14 +25,51 @@
 \subsection{Sistema Real}
 \begin{frame}{Sistema Real}
   \begin{itemize}
-    \item Breve descripción del sistema.
+    % Descripción del sistema real.
+    \item N particulas en movimiento.
+    \item Cada particula con su movimiento, posicion, radio y masa.
+    \item Viajan sin fuerzas externas.
+    \item Colisiones elásticas entre partículas.
+    \item Simulacion de un sistema de eventos.
   \end{itemize}
+  % imagen del sistema de eventos
+  \begin{center}
+    \includegraphics[width=0.3\linewidth]{photoMaterial/eventos_sistema_real.png}
+  \end{center}
 \end{frame}
 
 \subsection{Modelo Matemático}
 \begin{frame}{Modelo Matemático}
   \begin{itemize}
-    \item Ecuaciones generales.
+    \item Vuelo libre de las N particulas en un espacio 2D:
+      \begin{itemize}
+        \item $x_i(t) = x_i(0) + v_{x_i} t$
+        \item $y_i(t) = y_i(0) + v_{y_i} t$
+      \end{itemize}
+    \item Calculo de tiempo de colision contra paredes:
+      \begin{itemize}
+        \item $t_{c} = \infty$ si $dv \cdot dr \geqslant 0$,
+      \item $t_{c} = \infty$ si $d < 0$, siendo: $d = (dv \cdot dr)^2 - (dv \cdot dv)\cdot(dr \cdot dr - \sigma^2 )$,
+        \item $\sigma = r_i + r_j$
+        \item Colision con paredes espejan la velocidad en la normal de colision.
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+% Colisiones entre particulas, formulas
+\begin{frame}{Modelo Matemático}
+  \begin{itemize}
+    \item Calculo de impulso y velocidades post-colision de particulas:
+      \begin{itemize}
+        \item $J_x = J*dx/\sigma$
+        \item $J_y = J*dy/\sigma$
+        \item $J = \dfrac{2 m_i m_j}{m_i + m_j} \cdot \dfrac{dv \cdot dr}{\sigma}$
+        \item $vx_i^d = vx_i^a + J_x/m_i$
+        \item $vy_i^d = vy_i^a + J_y/m_i$
+        \item $vx_j^d = vx_j^a - J_x/m_j$
+        \item $vy_j^d = vy_j^a - J_y/m_j$
+      \end{itemize}
+    \item Coeficiente cuadratico medio: $<Z^2> = 2Dt$
   \end{itemize}
 \end{frame}
 
