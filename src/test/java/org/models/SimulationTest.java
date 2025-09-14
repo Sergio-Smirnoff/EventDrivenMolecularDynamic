@@ -21,6 +21,8 @@ public class SimulationTest {
     private Method snapToWall;
     private Method resolveCollision;
     private Method advanceSystem;
+    private Method handleWallBounce;
+    private Method calculateParticleCollisions;
 
     @BeforeEach
     void setUp() throws NoSuchMethodException {
@@ -32,6 +34,8 @@ public class SimulationTest {
         snapToWall = Simulation.class.getDeclaredMethod("snapToWall", Particle.class, CollisionType.class);
         resolveCollision = Simulation.class.getDeclaredMethod("resolveCollision", Collision.class);
         advanceSystem = Simulation.class.getDeclaredMethod("advanceSystem", double.class);
+        handleWallBounce = Simulation.class.getDeclaredMethod("handleWallBounce", Particle.class, CollisionType.class);
+        calculateParticleCollisions = Simulation.class.getDeclaredMethod("calculateParticleCollisions", Particle.class);
 
         // Allow access to the private methods
         timeToVerticalWall.setAccessible(true);
@@ -40,6 +44,8 @@ public class SimulationTest {
         snapToWall.setAccessible(true);
         resolveCollision.setAccessible(true);
         advanceSystem.setAccessible(true);
+        handleWallBounce.setAccessible(true);
+        calculateParticleCollisions.setAccessible(true);
     }
 
     /* --------------------- Vertical Wall Collision Cases --------------------- */
@@ -266,4 +272,68 @@ public class SimulationTest {
         assertEquals(CollisionType.HORIZONTAL, collision.getCollisionType());
         assertTrue(collision.isTrueCollision());
     }
+
+    /* --------------------- Vertex Collision Cases --------------------- */
+
+    @Test
+    void CheckVertexCollision() throws InvocationTargetException, IllegalAccessException {
+        Particle particle = new Particle(0, 0.045, 0.045, 0.01*Math.cos(Math.PI/4), 0.01*Math.sin(Math.PI/4));
+
+        Collision horizontalCollision = (Collision) timeToHorizontalWall.invoke(sim, particle);
+        Collision verticalCollision = (Collision) timeToVerticalWall.invoke(sim, particle);
+
+        assertEquals(verticalCollision.getTime(), horizontalCollision.getTime(), 1e-5);
+    }
+
+    @Test
+    void CheckVertexWallBounce() throws InvocationTargetException, IllegalAccessException {
+        Particle particle = new Particle(0, 0.045, 0.045, 0.01*Math.cos(Math.PI/4), 0.01*Math.sin(Math.PI/4));
+        Collision vertexCollision = new Collision(6.151828996322964, particle.getId(), CollisionType.VERTEX);
+
+        handleWallBounce.invoke(sim, particle, vertexCollision.getCollisionType());
+
+        assertEquals(-0.01*Math.cos(Math.PI/4), particle.getBallVelocityX(), 1e-5);
+        assertEquals(-0.01*Math.cos(Math.PI/4), particle.getBallVelocityY(), 1e-5);
+    }
+
+    @Test
+    void CheckVertexSnap() throws InvocationTargetException, IllegalAccessException {
+        Particle particle = new Particle(0, 0.08850000000000001, 0.0885, 0.01*Math.cos(Math.PI/4), 0.01*Math.sin(Math.PI/4));
+        Collision vertexCollision = new Collision(6.151828996322964, particle.getId(), CollisionType.VERTEX);
+
+        snapToWall.invoke(sim, particle, vertexCollision.getCollisionType());
+
+        assertEquals(0.0885, particle.getBallPositionX(), 1e-5);
+        assertEquals(0.0885, particle.getBallPositionY(), 1e-5);
+    }
+
+    @Test
+    void CalculateCollisionForParticleShouldBeVertexType() throws InvocationTargetException, IllegalAccessException {
+        Particle particle = new Particle(0, 0.045, 0.045, 0.01*Math.cos(Math.PI/4), 0.01*Math.sin(Math.PI/4));
+
+        calculateParticleCollisions.invoke(sim, particle);
+
+        assertFalse(particle.getCollisions().isEmpty());
+        assertEquals(1, particle.getCollisions().size());
+        assertEquals(CollisionType.VERTEX, particle.getCollisions().peek().getCollisionType());
+    }
+
+    @Test
+    void ResolveParticleCollisionVertexType() throws InvocationTargetException, IllegalAccessException {
+        Particle particle = new Particle(0, 0.045, 0.045, 0.01*Math.cos(Math.PI/4), 0.01*Math.sin(Math.PI/4));
+        Collision vertexCollision = new Collision(6.151828996322964, particle.getId(), CollisionType.VERTEX);
+
+        particle.addCollision(vertexCollision);
+
+        sim.manualAddParticle(particle);
+
+        advanceSystem.invoke(sim, vertexCollision.getTime());
+
+        assertEquals(0.0885, particle.getBallPositionY(), 1e-5);
+        assertEquals(0.0885, particle.getBallPositionX(), 1e-5);
+
+
+        resolveCollision.invoke(sim, vertexCollision);
+    }
+
 }

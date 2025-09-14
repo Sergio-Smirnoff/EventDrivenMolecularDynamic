@@ -200,7 +200,7 @@ public class Simulation {
         double y = p.getBallPositionY();
         boolean inBoxA = x < width - ballRadius || (x > width - ballRadius && Math.abs(width-ballRadius-x) < EPS);
         boolean inBoxB = x > width + ballRadius || (x < width + ballRadius && Math.abs(width+ballRadius-x) < EPS);
-        if(wall == CollisionType.VERTICAL){
+        if(wall == CollisionType.VERTICAL || wall == CollisionType.VERTEX){
             double newX = p.getBallPositionX();
             if(p.getBallVelocityX()>0){
                 if(inBoxA){
@@ -226,7 +226,8 @@ public class Simulation {
                 }
             }
             p.setBallPosition(newX, p.getBallPositionY());
-        }else{
+        }
+        if(wall == CollisionType.HORIZONTAL || wall == CollisionType.VERTEX){
             double newY = p.getBallPositionY();
             if(p.getBallVelocityY() > 0){
                 if(inBoxA){
@@ -257,14 +258,16 @@ public class Simulation {
      * @param w colliding wall
      */
     private void handleWallBounce(Particle p, CollisionType w){
+        double vx = p.getBallVelocityX();
+        double vy = p.getBallVelocityY();
         logger.debug("handling {} wall bounce for particle {}", w, p.getId());
         if (w.equals(CollisionType.VERTICAL)) {
-            p.setBallVelocity(-p.getBallVelocityX(), p.getBallVelocityY());
+            p.setBallVelocity(-vx, vy);
         } else if (w.equals(CollisionType.HORIZONTAL)) {
-            p.setBallVelocity(p.getBallVelocityX(), -p.getBallVelocityY());
+            p.setBallVelocity(vx, -vy);
         }else{
-            // depende como venga la partícula hacia el vértice
-            //p.setBallVelocity(-p.getBallVelocityX(), -p.getBallVelocityY());
+            // depende como venga la partícula hacia el vértice ?
+            p.setBallVelocity(-p.getBallVelocityX(), -p.getBallVelocityY());
         }
     }
 
@@ -321,7 +324,7 @@ public class Simulation {
         logger.debug("Resolving collision: type {}", collision.getCollisionType());
         logger.debug("");
         Particle particleA = particles.get(collision.getParticleA());
-        if(collision.getCollisionType() == CollisionType.HORIZONTAL || collision.getCollisionType() == CollisionType.VERTICAL){
+        if(collision.getCollisionType() != CollisionType.PARTICLE){
             snapToWall(particleA, collision.getCollisionType());
             if(collision.isTrueCollision()){
                 handleWallBounce(particleA, collision.getCollisionType());
