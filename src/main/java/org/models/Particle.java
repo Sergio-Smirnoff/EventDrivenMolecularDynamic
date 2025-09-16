@@ -5,8 +5,8 @@ import java.util.PriorityQueue;
 
 public class Particle {
 
-    private final double ballMass = 1; // in kg
-    private final double ballRadius = 0.0015; // meters
+    private double ballMass = 1; // in kg
+    private double ballRadius = 0.0015; // meters
 
     private final int id;
     
@@ -24,6 +24,16 @@ public class Particle {
         this.ballPositionY = positionY;
         this.ballVelocityX = velocityX;
         this.ballVelocityY = velocityY;
+    }
+
+    public Particle(int id, double positionX, double positionY, double velocityX, double velocityY, double ballRadius, double ballMass) {
+        this.id = id;
+        this.ballPositionX = positionX;
+        this.ballPositionY = positionY;
+        this.ballVelocityX = velocityX;
+        this.ballVelocityY = velocityY;
+        this.ballRadius = ballRadius;
+        this.ballMass = ballMass;
     }
 
     public void addCollision(Collision collision) {

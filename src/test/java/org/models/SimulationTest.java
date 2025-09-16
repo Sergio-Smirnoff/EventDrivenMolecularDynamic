@@ -46,6 +46,7 @@ public class SimulationTest {
         advanceSystem.setAccessible(true);
         handleWallBounce.setAccessible(true);
         calculateParticleCollisions.setAccessible(true);
+        handleParticleCollision.setAccessible(true);
     }
 
     /* --------------------- Vertical Wall Collision Cases --------------------- */
@@ -144,13 +145,33 @@ public class SimulationTest {
 
     @Test
     void testCollidingParticlesAgainstEachOtherVelocityAfter() throws InvocationTargetException, IllegalAccessException {
-        Particle p1 = new Particle(0, 0.01-0.0015, 0.01, 0.01, 0);
-        Particle p2 = new Particle(2, 0.01+0.0015, 0.01, -0.01, 0);
+        Particle p1 = new Particle(3, 0.01-0.0015, 0.01, 0.01, 0);
+        Particle p2 = new Particle(4, 0.01+0.0015, 0.01, -0.01, 0);
 
         handleParticleCollision.invoke(sim,p1,p2);
 
         assertEquals(-0.01, p1.getBallVelocityX());
         assertEquals(0.01, p2.getBallVelocityX());
+    }
+
+    /**
+     * ojo con el cal de esta colision, creo que me tomaría como duplicada la colisión con esta partícula
+     * y con el vértice como tal, revisar condición de vértice (tipo los internos)
+     *
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     */
+    @Test
+    void testHandleCollidingParticlesAgainstEachOtherTopVertexParticle() throws InvocationTargetException, IllegalAccessException {
+        Particle p1 = new Particle(4, 0.09-0.0015*Math.cos(Math.PI/4), 0.06-0.0015*Math.sin(Math.PI/4), 0.01*Math.cos(Math.PI/4), 0.01*Math.sin(Math.PI/4));
+        Particle topVertexParticle = new Particle(0, 0.09, 0.06, 0, 0, 0, Double.POSITIVE_INFINITY);
+
+        handleParticleCollision.invoke(sim,p1,topVertexParticle);
+
+        assertEquals(-0.01*Math.cos(Math.PI/4), p1.getBallVelocityX(), 1e-5);
+        assertEquals(-0.01*Math.sin(Math.PI/4), p1.getBallVelocityY(), 1e-5);
+        assertEquals(0, topVertexParticle.getBallVelocityX());
+        assertEquals(0, topVertexParticle.getBallVelocityY());
     }
 
     /* --------------------- No Mans Land Collision Cases --------------------- */

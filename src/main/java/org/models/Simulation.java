@@ -140,8 +140,8 @@ public class Simulation {
         logger.debug("Advancing all particles positions by {} seconds. Total time: {}s", timeSkip, totalTime);
         logger.debug("");
 
-        for (Particle p : particles) {
-
+        for (int i = 2; i < particlesCount + 2; i++) {
+            Particle p = particles.get(i);
             double newX = p.getBallPositionX() + p.getBallVelocityX() * timeSkip;
             double newY = p.getBallPositionY() + p.getBallVelocityY() * timeSkip;
             logger.debug("New X: {} New Y: {} for particle {}", newX, newY, p.getId());
@@ -266,7 +266,7 @@ public class Simulation {
         } else if (w.equals(CollisionType.HORIZONTAL)) {
             p.setBallVelocity(vx, -vy);
         }else{
-            // depende como venga la partícula hacia el vértice ?
+            // depende como venga la partícula hacia el vértice
             p.setBallVelocity(-p.getBallVelocityX(), -p.getBallVelocityY());
         }
     }
@@ -292,24 +292,39 @@ public class Simulation {
 
             double mi = a.getBallMass();
             double mj = b.getBallMass();
-            double J = (2 / (mi + mj)) * vn;
+            double J;
+
+            // la partícula b debería ser siempre el vértice
+            if (mi == Double.POSITIVE_INFINITY || mj == Double.POSITIVE_INFINITY) {
+                // Collision with an immovable object (vertex)
+                if (mi == Double.POSITIVE_INFINITY) { // Particle 'a' is the wall
+                    J = (2 * mj) * vn;
+                } else { // Particle 'b' is the wall
+                    J = (2 * mi) * vn;
+                }
+            } else {
+                // Standard two-particle collision
+                J = ((2 * mj * mi) / (mi + mj)) * vn;
+            }
 
 
-            logger.info("previous velocities for colliding particles {} against {}", a.getId(), a.getId());
+            logger.info("previous velocities for colliding particles {} against {}", a.getId(), b.getId());
             logger.info("particle {}: vx {}    vy {}", a.getId(), a.getBallVelocityX(), a.getBallVelocityY());
             logger.info("particle {}: vx {}    vy {}", b.getId(), b.getBallVelocityX(), b.getBallVelocityY());
 
             // actualizar velocidades: v' = v ± (J/m) * n
             double newVxForA = a.getBallVelocityX() + (J / mi) * nx;
             double newVyForA = a.getBallVelocityY() + (J / mi) * ny;
-            double newVxForB = b.getBallVelocityX() - (J / mi) * nx;
-            double newVyForB = b.getBallVelocityY() - (J / mi) * ny;
-
-            logger.info("new velocities for colliding particles {} against {}", a.getId(), a.getId());
-            logger.info("particle {}: vx {}    vy {}", a.getId(), newVxForA, newVyForA);
-            logger.info("particle {}: vx {}    vy {}", b.getId(), newVxForB, newVyForB);
             a.setBallVelocity( newVxForA, newVyForA);
-            b.setBallVelocity(newVxForB, newVyForB);
+
+            logger.info("new velocities for colliding particles {} against {}", a.getId(), b.getId());
+            logger.info("particle {}: vx {}    vy {}", a.getId(), newVxForA, newVyForA);
+            if(b.getId() > 1){
+                double newVxForB = b.getBallVelocityX() - (J / mi) * nx;
+                double newVyForB = b.getBallVelocityY() - (J / mi) * ny;
+                logger.info("particle {}: vx {}    vy {}", b.getId(), newVxForB, newVyForB);
+                b.setBallVelocity(newVxForB, newVyForB);
+            }
 
             logger.info("Colliding particle {} with particle {}", a.getId(), b.getId());
         }
@@ -338,7 +353,7 @@ public class Simulation {
         }
 
         calculateParticleCollisions(particleA);
-        if (collision.getParticleB() != -1 && collision.getParticleB() < particlesCount) {
+        if (collision.getParticleB() > 1 && collision.getParticleB() < particlesCount) {
             Particle particleB = particles.get(collision.getParticleB());
             calculateParticleCollisions(particleB);
         }
@@ -351,7 +366,8 @@ public class Simulation {
     private void calculateInitialCollisions() {
         logger.debug("");
         logger.debug("Calling Initial Collisions");
-        for (Particle particle : particles) {
+        for (int i = 2; i < particlesCount + 2; i++) {
+            Particle particle = particles.get(i);
             calculateParticleCollisions(particle);
         }
         logger.debug("");
@@ -633,15 +649,17 @@ public class Simulation {
             }
             writer.printf("%g;", totalTime); // fix with pressure
 
-            for (Particle p : particlesToSave) {
-                writer.printf("%d;", p.getId());
+            for(int i = 2; i < particlesCount + 2; i++){
+                Particle particle = particlesToSave.get(i);
+                writer.printf("%d;", particle.getId());
             }
 
             writer.printf("\n");
 
             // Write particle data
             writer.printf("positionX;positionY;velocityX;velocityY\n");
-            for (Particle particle : particles) {
+            for (int i = 2; i < particlesCount + 2; i++) {
+                Particle particle = particles.get(i);
                 writer.printf("%f;%f;%f;%f%n",
                         particle.getBallPositionX(),
                         particle.getBallPositionY(),
@@ -655,8 +673,20 @@ public class Simulation {
 
     }
 
+    /**
+     * Function that adds two particles with ballRadius = 0 to handle the collision
+     * to the vertex of the opening
+     */
+    private void addVertexParticles(){
+        Particle topVertexParticle = new Particle(0, width, topWallB, 0, 0, 0, Double.POSITIVE_INFINITY);
+        Particle bottomVertexParticle = new Particle(0, width, bottomWallB, 0, 0, 0, Double.POSITIVE_INFINITY);
+        particles.add(topVertexParticle);
+        particles.add(bottomVertexParticle);
+    }
+
     private void initializeSystem() {
-        for (int i = 0; i < particlesCount; i++) {
+        addVertexParticles();
+        for (int i = 2; i < particlesCount + 2; i++) {
             double ballPositionX;
             double ballPositionY;
             boolean overlaps;
