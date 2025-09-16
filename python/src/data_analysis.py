@@ -204,7 +204,7 @@ def plot_presion_vs_L(files):
 
 
 def presion_vs_area(files):
-    P_means, A_inv, P_errors = [], [], []
+    P_means, A_inv, P_errors, A = [], [], [], []
 
     for fname in files:
         N, L = leer_header(fname)
@@ -225,6 +225,8 @@ def presion_vs_area(files):
         P_means.append(P_mean)
         A_inv.append(1.0 / A_total)
         P_errors.append(P_std_dev) 
+        A.append(A_total)
+
 
     P_means = np.array(P_means)
     A_inv = np.array(A_inv)
@@ -235,6 +237,16 @@ def presion_vs_area(files):
                  ecolor='lightblue', capsize=5)
     
     plt.xlabel("1/Área [1/m²]")
+    plt.ylabel("Presión [Pa]")
+    plt.tight_layout()
+    plt.legend()
+    plt.show()
+
+    plt.figure(figsize=(10, 6))
+    plt.errorbar(A, P_means, yerr=P_errors, fmt='o', color='blue', 
+                 ecolor='lightblue', capsize=5)
+
+    plt.xlabel("Área [m²]")
     plt.ylabel("Presión [Pa]")
     plt.tight_layout()
     plt.legend()
