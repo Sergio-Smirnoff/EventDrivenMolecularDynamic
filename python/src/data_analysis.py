@@ -151,7 +151,7 @@ def presiones_vs_t(filename, interval=0.8):
         P_A_list.append(P_A)
         P_B_list.append(P_B)
 
-    return tiempos, P_A_list, P_B_list
+    return tiempos[:-2], P_A_list[:-2], P_B_list[:-2]
 
 def plot_presiones_vs_t(filename, interval=0.8):
     tiempos, P_A_list, P_B_list = presiones_vs_t(filename, interval)
@@ -166,8 +166,9 @@ def plot_presiones_vs_t(filename, interval=0.8):
     return tiempos, P_A_list, P_B_list
 
 def presion_promedio(P_A_list, P_B_list):
-    pA_mean = np.mean(P_A_list)
-    pB_mean = np.mean(P_B_list)
+    start_index = int(len(P_A_list) * 0.1)
+    pA_mean = np.mean(P_A_list[start_index:])
+    pB_mean = np.mean(P_B_list[start_index:])
 
     return pA_mean, pB_mean
 
