@@ -159,6 +159,8 @@ def plot_presiones_vs_t(filename, interval=0.8):
     plt.plot(tiempos, P_B_list, label="Caja B")
     plt.xlabel("Tiempo [s]")
     plt.ylabel("Presión [Pa]")
+    plt.xticks(fontsize=11)
+    plt.yticks(fontsize=11)
     plt.tight_layout()
     plt.legend()
     plt.show()
@@ -276,7 +278,8 @@ def difusion(filename):
     pos0 = np.array([[float(p.x), float(p.y)] for p in frames[0][2]])
 
     msd, tiempos = [], []
-    for t, _, particles in frames:
+
+    for t, _, particles in frames[:]:
         pos = np.array([[float(p.x), float(p.y)] for p in particles])
         disp = pos - pos0
         sq_disp = np.sum(disp**2, axis=1)
@@ -286,18 +289,22 @@ def difusion(filename):
     tiempos = np.array(tiempos)
     msd = np.array(msd)
 
-    D_manual, rmse = manual_diffusion_fit(tiempos, msd)
+    prune = int(len(msd) * 0.2) 
+
+    D_manual, rmse = manual_diffusion_fit(tiempos[:-prune], msd[:-prune])
 
     plt.figure(figsize=(10, 6))
     
     plt.scatter(tiempos, msd, s=10, alpha=0.7, label="Datos MSD (Simulación)")
-    plt.plot(tiempos, modelo_diff(tiempos, D_manual),
+    plt.plot(tiempos[:-prune], modelo_diff(tiempos[:-prune], D_manual),
              color="red", linestyle="--", label=f"Ajuste Manual")
     
     plt.xscale('log')
     plt.yscale('log')
     plt.xlabel("Tiempo (s)")
     plt.ylabel("MSD ($m^2$)")
+    plt.xticks(fontsize=11)
+    plt.yticks(fontsize=11)
     plt.legend()
     plt.tight_layout()
     plt.show()
@@ -310,8 +317,8 @@ def difusion(filename):
         msd_fit = msd
 
     plot_quadratic_error(
-        x_data=t_fit,
-        y_data=msd_fit,
+        x_data=t_fit[:-prune],
+        y_data=msd_fit[:-prune],
         best_fit_param=D_manual,
         model_func=modelo_diff,
         param_name="D",
