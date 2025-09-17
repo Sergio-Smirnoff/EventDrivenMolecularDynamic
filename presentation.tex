@@ -17,6 +17,7 @@
 % Portada
 \begin{frame}
   \titlepage
+  \small Integrantes: MARTINA SCHVARTZ TALLONE, PATRICK LUCA TORLASCHI y SERGIO SMIRNOFF
 \end{frame}
 
 % Introducción
@@ -70,85 +71,103 @@
         \item $vx_j^d = vx_j^a - J_x/m_j$
         \item $vy_j^d = vy_j^a - J_y/m_j$
       \end{itemize}
-    \item Coeficiente cuadratico medio: $<z^2> = 2Dt$
   \end{itemize}
 \end{frame}
 
 % Implementación
 \section{Implementación}
 \begin{frame}{Implementación}
-  \begin{itemize}
-    \item Arquitectura del código.
-    \item Pseudocódigo o UML.
-  \end{itemize}
-  \begin{column}{0.5\textwidth}
-    \begin{itemize}
-      \item N particulas de radio $r_i$ y masa $m_i$.
-      \item Posicion $(x_i, y_i)$ y velocidad $(v_{x_i}, v_{y_i})$.
-      \item Colisiones elásticas entre partículas y paredes.
-      \item Condiciones de frontera: Paredes rígidas.
-    \end{itemize}
-  \end{column}
+  \begin{columns}
+    \begin{column}{0.4\textwidth}
+      {\scriptsize
+        \begin{center}
+          \includegraphics[width=0.9\linewidth]{photoMaterial/uml.png}
+        \end{center}
+      }
+    \end{column}
+    \begin{column}{0.6\textwidth}
+      {\scriptsize
+        \textbf{Estructura del código y elementos importantes:}
+        \begin{itemize}
+          \item \texttt{Main(maxIter, nombreArchivo, L)}
+          \item \texttt{runSimulation} $\rightarrow$ realiza las iteraciones separadas en:
+          \begin{itemize}
+            \scriptsize{
+            \item \texttt{initialization()} $\rightarrow$ Se inicializan las partículas.
+            \item \texttt{inicialCollisions()} $\rightarrow$ Se calculan las colisiones iniciales.
+            \item \texttt{findNextEvent()} $\rightarrow$ Encuentra el próximo evento.
+            \item \texttt{advanceTime()} $\rightarrow$ Avanza el tiempo y actualiza las posiciones de las partículas.
+            \item \texttt{processEvent()} $\rightarrow$ Procesa el evento.
+            }
+          \end{itemize}
+          \item Clase \texttt{Particle}
+          \item Clase \texttt{Colisions}
+        \end{itemize}
+      }
+    \end{column}
+  \end{columns}
 \end{frame}
+
+
 \begin{frame}{Implementación de vértices}
   % Consultar martina
   \begin{itemize}
-    \item Arquitectura del código.
-    \item Pseudocódigo o UML.
+    \item Rime to horizontal wall = time to vertical wall = vertice.
+    \item Se tienen 1 particula en cada vertice.
+    \item Caracteristicas:
+      \begin{itemize}
+        \item Radio = 0.
+        \item Masa = $\infty$.
+      \end{itemize}
+    \item Espejan las velocidades en el choque a 45°.
+    \item Espejan una de las velocidades en los distintos choques.
+    \item No se mueven.
   \end{itemize}
-  \begin{column}{0.5\textwidth}
-    \begin{itemize}
-      \item N particulas de radio $r_i$ y masa $m_i$.
-      \item Posicion $(x_i, y_i)$ y velocidad $(v_{x_i}, v_{y_i})$.
-      \item Colisiones elásticas entre partículas y paredes.
-      \item Condiciones de frontera: Paredes rígidas.
-    \end{itemize}
-  \end{column}
 \end{frame}
 
 % Simulaciones
 
-\begin{frame}{Geometría del sistema y ubicaciones iniciales}
-  \small Dos cajas A y B, conectadas por una abertura de tamaño L.
-
-  \vspace{0.5cm}
-  \begin{center}
-    \includegraphics[width=0.5\linewidth]{photoMaterial/geometria.jpg}
-  \end{center}
-  \vspace{0.5cm}
-
-  \small Las partículas se distribuyen uniformemente en la caja A al inicio de la simulación sin superponerse.
+\begin{frame}{Geometría del sistema y parámetros de simulación}
+  \scriptsize
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \textbf{Geometría:}
+      \begin{itemize}
+        \item Dos cajas A y B, conectadas por una abertura de tamaño $L$.
+        \item Las partículas se distribuyen uniformemente en la caja A al inicio de la simulación sin superponerse.
+      \end{itemize}
+      \vspace{0.2cm}
+      \begin{center}
+        \includegraphics[width=0.85\linewidth]{photoMaterial/geometria.jpg}
+      \end{center}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{Constantes:}
+      \begin{itemize}
+        \item Número de partículas: 250.
+        \item Dimensiones caja A: \textit{0.09} m $\times$ \textit{0.09} m.
+        \item Dimensiones caja B: \textit{0.09} m ancho.
+        \item Radio partículas: \textit{0.0015} m.
+        \item Masa partículas: \textit{1} kg.
+        \item Velocidad inicial: \textit{0.01} m/s.
+      \end{itemize}
+      \vspace{0.2cm}
+      \textbf{Variables:}
+      \begin{itemize}
+        \item $L \in \{ \textit{0.09}, \textit{0.07}, \textit{0.05}, \textit{0.03} \}$
+      \end{itemize}
+    \end{column}
+  \end{columns}
 \end{frame}
-
-\section{Simulaciones}
-\subsection{Parámetros y observables}
-\begin{frame}{Parámetros de la simulación}
-  \textbf{Constantes}
-    \begin{itemize}
-      \item Numero de partículas: 250.
-      \item Dimensiones caja A: \textit{0.09} m ancho x \textit{0.09} m alto.
-      \item Dimensiones caja B: \textit{0.09} m ancho.
-      \item Radio partículas: \textit{0.0015} m.
-      \item Masa partículas: \textit{0.01} kg.
-      \item Velocidad inicial: \textit{0.01} m/s.
-      \item EPS: \textit{1e-12}.
-    \end{itemize}
-    \vspace{0.5cm}
-    \textbf{Variables}
-    \begin{itemize}
-      \item L puede tomar los valores de: \textit{0.09} m, \textit{0.07} m, \textit{0.05} m y \textit{0.03} kg.
-    \end{itemize}
-  \end{frame}
 
 \begin{frame}{Definición matemática de observables}
   \textbf{Observables}
   \begin{itemize}
     \item Presión en las cajas A y B.
     \item Calculándolas como la suma de los impúlsos por colisiones contra la pared por unidad de tiempo.
-    \item Se obtiene con la fórmula:
-      \begin{equation}
-        P = \frac{1}{A} \sum J_i
-      \end{equation}
+    \item Se obtiene con la fórmula: $P = \frac{1}{A} \sum J_i$ siendo A el área de la pared y $J_i$ el impulso de cada colisión.
+    \item $J_i = 2 * v_n$ siendo $v_n$ la velocidad de la partícula.
+    \item Coeficiente cuadratico medio: $<z^2> = 2Dt$
   \end{itemize}
 \end{frame}
 
@@ -174,9 +193,9 @@
     \end{column}
     \end{columns}
     \tiny Podemos tomar estacionario a partir de los 20 segundos.
-    \tiny Con: N = \textit{250}, r = \textit{0.0015} m, m = \textit{0.01} kg.
+    \tiny Con: N = \textit{250}, r = \textit{0.0015} m, m = \textit{1} kg.
 \end{frame}
-\subsection{Primer estudio: Presión vs $A^{-1}$}
+\subsection{Input vs Observable}
 \begin{frame}{Evolución temporal del observable}
   \begin{columns}
     \begin{column}{0.5\textwidth}
@@ -189,10 +208,10 @@
     \end{column}
   \end{columns}
   \tiny Podemos tomar estacionario a partir de los 20 segundos.
-  \tiny Con: N = \textit{250}, r = \textit{0.0015} m, m = \textit{0.01} kg.
+  \tiny Con: N = \textit{250}, r = \textit{0.0015} m, m = \textit{1} kg.
 \end{frame}
 
-\begin{frame}{Input vs Observable}
+\begin{frame}{Primer estudio: Presión vs $A^{-1}$}
   \begin{columns}
     \begin{column}{0.40\textwidth}
       \scriptsize \text{Input}
@@ -200,18 +219,18 @@
         \item L = \textit{0.09} m, \textit{0.007} m, \textit{0.05} m, \textit{0.03} m. 
         \item Velocidad inicial = \textit{0.01} m/s.
         \item Radio partículas = \textit{0.0015} m.
-        \item Masa partículas = \textit{0.01} kg.
+        \item Masa partículas = \textit{1} kg.
         \item Número de partículas = 250.
       \end{itemize}
     \end{column}
     \begin{column}{0.60\textwidth}
-      %\includegraphics[width=0.75\linewidth]{photoMaterial/Presion_vs_area.png} ver si meterlo o no
+      \includegraphics[width=1\linewidth]{photoMaterial/Presion_vs_area.png} % meter el de area real
       \includegraphics[width=1\linewidth]{photoMaterial/Presion_vs_L.png}
     \end{column}
   \end{columns}
 \end{frame}
 
-\begin{frame}{Input vs Observable}
+\begin{frame}{Primer estudio: Presión vs $A^{-1}$}
   \begin{columns}
     \begin{column}{0.40\textwidth}
       \scriptsize \text{Input}
@@ -219,7 +238,7 @@
         \item L = \textit{0.09} m, \textit{0.007} m, \textit{0.05} m, \textit{0.03} m. 
         \item Velocidad inicial = \textit{0.01} m/s.
         \item Radio partículas = \textit{0.0015} m.
-        \item Masa partículas = \textit{0.01} kg.
+        \item Masa partículas = \textit{1} kg.
         \item Número de partículas = 250.
       \end{itemize}
     \end{column}
@@ -232,37 +251,12 @@
 
 \subsection{Segundo estudio: Coeficiente de difusión}
 \begin{frame}{Coeficiente de difusión}
+  \tiny \text{Input:} L = \textit{0.09} m -- Velocidad inicial = \textit{0.01} m/s -- Radio partículas = \textit{0.0015} m -- Masa partículas = \textit{1} kg -- Número de partículas = 250.
   \begin{columns}
-    \begin{column}{0.30\textwidth}
-      \scriptsize \text{Input}
-      \begin{itemize}
-        \item L = \textit{0.09} m. 
-        \item Velocidad inicial = \textit{0.01} m/s.
-        \item Radio partículas = \textit{0.0015} m.
-        \item Masa partículas = \textit{0.01} kg.
-        \item Número de partículas = 250.
-      \end{itemize}
-    \end{column}
-    \begin{column}{0.70\textwidth}
-      %\includegraphics[width=0.75\linewidth]{photoMaterial/Presion_vs_area.png} ver si meterlo o no
+    \begin{column}{0.50\textwidth}
       \includegraphics[width=1.10\linewidth]{photoMaterial/MSD_09.png}
     \end{column}
-  \end{columns}
-\end{frame}
-
-\begin{frame}{Coeficiente de difusión}
-  \begin{columns}
-    \begin{column}{0.30\textwidth}
-      \scriptsize \text{Input}
-      \begin{itemize}
-        \item L = \textit{0.03} m. 
-        \item Velocidad inicial = \textit{0.01} m/s.
-        \item Radio partículas = \textit{0.0015} m.
-        \item Masa partículas = \textit{0.01} kg.
-        \item Número de partículas = 250.
-      \end{itemize}
-    \end{column}
-    \begin{column}{0.70\textwidth}
+    \begin{column}{0.50\textwidth}
       %\includegraphics[width=0.75\linewidth]{photoMaterial/Presion_vs_area.png} ver si meterlo o no
       \includegraphics[width=1.10\linewidth]{photoMaterial/MSD_03.png}
     \end{column}
