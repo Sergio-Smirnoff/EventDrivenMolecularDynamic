@@ -196,6 +196,8 @@ def plot_presion_vs_L(files):
     
     plt.xlabel("Longitud L [m]")
     plt.ylabel("Presión [Pa]")
+    plt.xticks(fontsize=11)
+    plt.yticks(fontsize=11)
     plt.legend()
     plt.tight_layout()
     plt.show()
@@ -238,6 +240,8 @@ def presion_vs_area(files):
     
     plt.xlabel("1/Área [1/m²]")
     plt.ylabel("Presión [Pa]")
+    plt.xticks(fontsize=11)
+    plt.yticks(fontsize=11)
     plt.tight_layout()
     plt.legend()
     plt.show()
@@ -248,6 +252,8 @@ def presion_vs_area(files):
 
     plt.xlabel("Área [m²]")
     plt.ylabel("Presión [Pa]")
+    plt.xticks(fontsize=11)
+    plt.yticks(fontsize=11)
     plt.tight_layout()
     plt.legend()
     plt.show()
@@ -271,6 +277,8 @@ def ajuste_presion_vs_area(A_inv, P_means, P_errors):
     
     plt.xlabel("1/Área [1/m²]")
     plt.ylabel("Presión promedio [Pa]")
+    plt.xticks(fontsize=11)
+    plt.yticks(fontsize=11)
     plt.tight_layout()
     plt.legend()
     plt.show()
@@ -307,7 +315,7 @@ def difusion(filename):
 
     plt.figure(figsize=(10, 6))
     
-    plt.scatter(tiempos, msd, s=10, alpha=0.7, label="Datos MSD (Simulación)")
+    plt.scatter(tiempos, msd, s=10, alpha=0.7, label="MSD")
     plt.plot(tiempos[:-prune], modelo_diff(tiempos[:-prune], D_manual),
              color="red", linestyle="--", label=f"Ajuste Manual")
     
@@ -372,6 +380,8 @@ def plot_quadratic_error(x_data, y_data, best_fit_param, model_func, param_name,
     
     plt.xlabel(f"Valores del parámetro '{param_name}'")
     plt.ylabel("Suma de Errores Cuadráticos (SSE)")
+    plt.xticks(fontsize=11)
+    plt.yticks(fontsize=11)
     plt.title(title)
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.6)
