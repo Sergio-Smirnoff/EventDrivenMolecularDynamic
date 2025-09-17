@@ -11,6 +11,7 @@ import java.util.PriorityQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.lang.System.exit;
 
 
 public class Simulation {
@@ -39,6 +40,11 @@ public class Simulation {
         this.particles = new ArrayList<>(particlesCount);
     }
 
+    /** ============ FOR TESTING PURPOSES ============ **/
+    public void manualAddParticle(Particle particle) {
+        particles.add(particle);
+    }
+
     /* ----------------------- Main Simulation Loop Functions ----------------------- */
 
     public void runSimulation(int maxIterations, String filepath){
@@ -50,8 +56,11 @@ public class Simulation {
         List<Particle> collisionedParticles = new ArrayList<>();
 
         for (int collisionCount = 1; collisionCount <= maxIterations; collisionCount++) {
+            logger.info("");
+            logger.info("");
             logger.info("***********************");
-            logger.info("Collision number: {}", collisionCount);
+            logger.info("Starting New Collision Analysis");
+            logger.info("------- Collision number: {} -------", collisionCount);
 
             // 1. Find the very next event in the entire system.
             Collision nextEvent = findNextEvent();
@@ -61,6 +70,7 @@ public class Simulation {
                 break;
             }
 
+            logger.info("Info About Collision:");
             logger.info(" ");
             logger.info("colliding time {}", nextEvent.getTime());
             logger.info("colliding particle {}", nextEvent.getParticleA());
@@ -88,6 +98,9 @@ public class Simulation {
 
             saveSimulationState(filepath, false, collisionedParticles);
             collisionedParticles.clear();
+            logger.info("***********************");
+            logger.info("");
+            logger.info("");
         }
     }
 
@@ -124,23 +137,27 @@ public class Simulation {
             return false;
         }
 
-        for (Particle p : particles) {
+        logger.debug("Advancing all particles positions by {} seconds. Total time: {}s", timeSkip, totalTime);
+        logger.debug("");
 
+        for (int i = 2; i < particlesCount + 2; i++) {
+            Particle p = particles.get(i);
             double newX = p.getBallPositionX() + p.getBallVelocityX() * timeSkip;
             double newY = p.getBallPositionY() + p.getBallVelocityY() * timeSkip;
+            logger.debug("New X: {} New Y: {} for particle {}", newX, newY, p.getId());
             p.setBallPosition(newX, newY);
             for (Collision c : p.getCollisions()) {
                 c.setTime(c.getTime() - timeSkip);
-                if(c.collisionWithWall()){
+                /*if(c.collisionWithWall()){
                     logger.info("new collision with wall time {} for particle {}", c.getTime(), p.getId());
                 }else{
                     logger.info("new collision time {} for particle {} against {}", c.getTime(), c.getParticleA(), c.getParticleB());
-                }
+                }*/
             }
         }
 
         totalTime += timeSkip;
-        logger.debug("Advanced time by {}. Total time: {}", timeSkip, totalTime);
+        logger.debug("");
         return true;
     }
 
@@ -171,48 +188,68 @@ public class Simulation {
      * Given a particle that collides with a wall, or to the invisible wall, corrects
      * the value to avoid things like y = 0.00150000000000002 or y = 0.001499999999999999999996
      * If the particle happens to be in the edges of the opening (0.0885 or 0.0915) then
-     * it leaves it as it is
+     * it leaves it as it is, unless the collision is with a horizontal wall, then it will snap it
      *
      * @param p particle which collides
      * @param wall wall to which the particle collides
      */
     private void snapToWall(Particle p, CollisionType wall){
-        boolean inBoxA = p.getBallPositionX() < width - ballRadius - EPS;
-        boolean inBoxB = p.getBallPositionX() > width + ballRadius + EPS;
-        if(wall == CollisionType.VERTICAL){
+        logger.debug("Inside snap function to check if particle {} must snap to {} wall", p.getId(), wall);
+        logger.debug("where x={} and y={}", p.getBallPositionX(), p.getBallPositionY());
+        double x = p.getBallPositionX();
+        double y = p.getBallPositionY();
+        boolean inBoxA = x < width - ballRadius || (x > width - ballRadius && Math.abs(width-ballRadius-x) < EPS);
+        boolean inBoxB = x > width + ballRadius || (x < width + ballRadius && Math.abs(width+ballRadius-x) < EPS);
+        if(wall == CollisionType.VERTICAL || wall == CollisionType.VERTEX){
             double newX = p.getBallPositionX();
             if(p.getBallVelocityX()>0){
                 if(inBoxA){
                     newX = width - ballRadius;
+                    logger.info("snapped particle to vertical wall at x: {} y: {}", newX, p.getBallPositionY());
                 } else if (inBoxB) {
                     newX = 2 * width - ballRadius;
+                    logger.info("snapped particle to vertical wall at x: {} y: {}", newX, p.getBallPositionY());
+                }else{
+                    logger.info("left particle {} the same at x: {} y: {}", p.getId(), p.getBallPositionX(), p.getBallPositionY());
                 }
                 // x == 0.0885 or 0.0915
             }else{
                 if(inBoxA){
                     newX = ballRadius;
+                    logger.info("snapped particle to vertical wall at x: {} y: {}", newX, p.getBallPositionY());
                 } else if (inBoxB) {
                     newX = width + ballRadius;
+                    logger.info("snapped particle to vertical wall at x: {} y: {}", newX, p.getBallPositionY());
+                }
+                else {
+                    logger.info("left particle {} the same at x: {} y: {}", p.getId(), p.getBallPositionX(), p.getBallPositionY());
                 }
             }
             p.setBallPosition(newX, p.getBallPositionY());
-        }else{
+        }
+        if(wall == CollisionType.HORIZONTAL || wall == CollisionType.VERTEX){
             double newY = p.getBallPositionY();
             if(p.getBallVelocityY() > 0){
                 if(inBoxA){
                     newY = heightFirstBox - ballRadius;
-                } else if (inBoxB) {
-                    newY = topWallB - ballRadius;
+                    logger.info("snapped particle to horizontal wall at x: {} y: {}", p.getBallPositionX(), newY);
+                } else {
+                    newY = heightSecondBox == 0.03 ? 0.0585: topWallB - ballRadius;
+                    logger.info("snapped particle to horizontal wall at x: {} y: {}", p.getBallPositionX(), newY);
                 }
             }else{
                 if(inBoxA){
                     newY = ballRadius;
-                } else if (inBoxB) {
+                    logger.info("snapped particle to horizontal wall at x: {} y: {}", p.getBallPositionX(), newY);
+                } else {
                     newY = bottomWallB + ballRadius;
+                    logger.info("snapped particle {} to horizontal wall at x: {} y: {}", p.getId(), p.getBallPositionX(), newY);
                 }
             }
             p.setBallPosition(p.getBallPositionX(), newY);
+
         }
+        logger.debug("");
     }
 
     /**
@@ -221,11 +258,15 @@ public class Simulation {
      * @param w colliding wall
      */
     private void handleWallBounce(Particle p, CollisionType w){
+        double vx = p.getBallVelocityX();
+        double vy = p.getBallVelocityY();
+        logger.debug("handling {} wall bounce for particle {}", w, p.getId());
         if (w.equals(CollisionType.VERTICAL)) {
-            p.setBallVelocity(-p.getBallVelocityX(), p.getBallVelocityY());
+            p.setBallVelocity(-vx, vy);
         } else if (w.equals(CollisionType.HORIZONTAL)) {
-            p.setBallVelocity(p.getBallVelocityX(), -p.getBallVelocityY());
+            p.setBallVelocity(vx, -vy);
         }else{
+            // depende como venga la partícula hacia el vértice
             p.setBallVelocity(-p.getBallVelocityX(), -p.getBallVelocityY());
         }
     }
@@ -251,24 +292,39 @@ public class Simulation {
 
             double mi = a.getBallMass();
             double mj = b.getBallMass();
-            double J = (2 / (mi + mj)) * vn;
+            double J;
+
+            // la partícula b debería ser siempre el vértice
+            if (mi == Double.POSITIVE_INFINITY || mj == Double.POSITIVE_INFINITY) {
+                // Collision with an immovable object (vertex)
+                if (mi == Double.POSITIVE_INFINITY) { // Particle 'a' is the wall
+                    J = (2 * mj) * vn;
+                } else { // Particle 'b' is the wall
+                    J = (2 * mi) * vn;
+                }
+            } else {
+                // Standard two-particle collision
+                J = ((2 * mj * mi) / (mi + mj)) * vn;
+            }
 
 
-            logger.info("previous velocities for colliding particles {} against {}", a.getId(), a.getId());
+            logger.info("previous velocities for colliding particles {} against {}", a.getId(), b.getId());
             logger.info("particle {}: vx {}    vy {}", a.getId(), a.getBallVelocityX(), a.getBallVelocityY());
             logger.info("particle {}: vx {}    vy {}", b.getId(), b.getBallVelocityX(), b.getBallVelocityY());
 
             // actualizar velocidades: v' = v ± (J/m) * n
             double newVxForA = a.getBallVelocityX() + (J / mi) * nx;
             double newVyForA = a.getBallVelocityY() + (J / mi) * ny;
-            double newVxForB = b.getBallVelocityX() - (J / mi) * nx;
-            double newVyForB = b.getBallVelocityY() - (J / mi) * ny;
-
-            logger.info("new velocities for colliding particles {} against {}", a.getId(), a.getId());
-            logger.info("particle {}: vx {}    vy {}", a.getId(), newVxForA, newVyForA);
-            logger.info("particle {}: vx {}    vy {}", b.getId(), newVxForB, newVyForB);
             a.setBallVelocity( newVxForA, newVyForA);
-            b.setBallVelocity(newVxForB, newVyForB);
+
+            logger.info("new velocities for colliding particles {} against {}", a.getId(), b.getId());
+            logger.info("particle {}: vx {}    vy {}", a.getId(), newVxForA, newVyForA);
+            if(b.getId() > 1){
+                double newVxForB = b.getBallVelocityX() - (J / mi) * nx;
+                double newVyForB = b.getBallVelocityY() - (J / mi) * ny;
+                logger.info("particle {}: vx {}    vy {}", b.getId(), newVxForB, newVyForB);
+                b.setBallVelocity(newVxForB, newVyForB);
+            }
 
             logger.info("Colliding particle {} with particle {}", a.getId(), b.getId());
         }
@@ -280,12 +336,15 @@ public class Simulation {
      * @param collision occurring collision
      */
     private void resolveCollision(Collision collision) {
+        logger.debug("Resolving collision: type {}", collision.getCollisionType());
+        logger.debug("");
         Particle particleA = particles.get(collision.getParticleA());
-        if(collision.getCollisionType() == CollisionType.HORIZONTAL || collision.getCollisionType() == CollisionType.VERTICAL){
+        if(collision.getCollisionType() != CollisionType.PARTICLE){
             snapToWall(particleA, collision.getCollisionType());
             if(collision.isTrueCollision()){
                 handleWallBounce(particleA, collision.getCollisionType());
             }else{
+                logger.debug("particle does not bounce off wall");
                 logger.info("False Collision between particle {} to vertical wall at y={} and x={}", particleA.getId(), particleA.getBallPositionY(), particleA.getBallPositionX());
             }
         }else{
@@ -294,20 +353,24 @@ public class Simulation {
         }
 
         calculateParticleCollisions(particleA);
-        if (collision.getParticleB() != -1 && collision.getParticleB() < particlesCount) {
+        if (collision.getParticleB() > 1 && collision.getParticleB() < particlesCount) {
             Particle particleB = particles.get(collision.getParticleB());
             calculateParticleCollisions(particleB);
         }
+        logger.debug("");
     }
 
     /**
      * Calculates all initial collisions for all particles
      */
     private void calculateInitialCollisions() {
-        for (Particle particle : particles) {
-            // thread
+        logger.debug("");
+        logger.debug("Calling Initial Collisions");
+        for (int i = 2; i < particlesCount + 2; i++) {
+            Particle particle = particles.get(i);
             calculateParticleCollisions(particle);
         }
+        logger.debug("");
     }
 
     /**
@@ -316,6 +379,8 @@ public class Simulation {
      */
     private void calculateParticleCollisions(Particle particle) {
         cleanCollisions(particle);
+        logger.debug("");
+        logger.info("CALCULATING COLLISIONS FOR PARTICLE {}", particle.getId());
         // Collisions with walls
         Collision collisionVertical = timeToVerticalWall(particle);
         Collision collisionHorizontal = timeToHorizontalWall(particle);
@@ -395,6 +460,7 @@ public class Simulation {
     }
 
 
+
     /**
      * Function that calculates the time it takes for a particle to collide with Horizontal walls.
      * If the particle is in the edges of the opening (0.0885 or 0.0915) then the comparison
@@ -404,30 +470,54 @@ public class Simulation {
      * @return the new Collision item set to the corresponding wall
      */
     private Collision timeToHorizontalWall(Particle particle) {
-        double y = particle.getBallPositionY();
         double x = particle.getBallPositionX();
-        boolean inBoxA = x < width - ballRadius;
+        double y = particle.getBallPositionY();
+        boolean inBoxA = x < width - ballRadius; // && !(y >= bottomWallB + ballRadius && y <= (heightSecondBox == 0.03 ? 0.0585: topWallB - ballRadius));
         boolean inBoxB = x > width + ballRadius;
         double finalPosition;
 
         if (particle.getBallVelocityY() > 0) {
-            double topWall;
-            if(inBoxA){
-                topWall = heightFirstBox;
+            if(inBoxA || (x == width - ballRadius && !(y >= bottomWallB + ballRadius && y <= (heightSecondBox == 0.03 ? 0.0585: topWallB - ballRadius)))){
+                finalPosition = heightFirstBox - ballRadius;
             } else if (inBoxB) {
-                topWall = topWallB;
-            }else{
-                topWall = particle.getBallVelocityX() > 0 ? topWallB : heightFirstBox;
+                finalPosition = heightSecondBox == 0.03 ? 0.0585: topWallB - ballRadius;
+            } else{
+                logger.info("collision for no mans land for particle {} in x {} y {}", particle.getId(), x, y);
+                if(particle.getBallVelocityX()>0){
+                    finalPosition = heightSecondBox == 0.03 ? 0.0585: topWallB - ballRadius;
+                }else{
+                    // desplazo la partícula a la zona crítica -> es necesario?
+                    double lookAheadTime = timeToPosition(y, topWallB, particle.getBallVelocityY());
+                    double lookAheadX = x + particle.getBallVelocityX() * lookAheadTime;
+                    if(lookAheadX + ballRadius < width){
+                        finalPosition = heightFirstBox - ballRadius;
+                    }else{
+                        finalPosition = heightSecondBox == 0.03 ? 0.0585: topWallB - ballRadius;
+                    }
+                }
+                //topWall = particle.getBallVelocityX() > 0 ? topWallB : heightFirstBox;
             }
-            finalPosition = topWall - ballRadius;
         } else {
             double bottomWall;
-            if(inBoxA){
+            if(inBoxA || (x == width - ballRadius && !(y >= bottomWallB + ballRadius && y <= (heightSecondBox == 0.03 ? 0.0585: topWallB - ballRadius)))){
                 bottomWall = 0;
             } else if (inBoxB) {
                 bottomWall = bottomWallB;
             }else{
-                bottomWall = particle.getBallVelocityX() > 0 ? bottomWallB : 0;
+                logger.info("collision for no mans land for particle {} in x {} y {}", particle.getId(), x, y);
+                if(particle.getBallVelocityX()>0){
+                    bottomWall = bottomWallB;
+                }else{
+                    // desplazo la partícula a la zona crítica
+                    double lookAheadTime = timeToPosition(y, bottomWallB, particle.getBallVelocityY());
+                    double lookAheadX = x + particle.getBallVelocityX() * lookAheadTime;
+                    if(lookAheadX + ballRadius < width){
+                        bottomWall = 0;
+                    }else{
+                        bottomWall = bottomWallB;
+                    }
+                }
+                //bottomWall = particle.getBallVelocityX() > 0 ? bottomWallB : 0;
             }
             finalPosition = bottomWall + ballRadius;
         }
@@ -439,6 +529,13 @@ public class Simulation {
         logger.debug("final position {}", finalPosition);
         logger.debug("time {}",time);
         logger.debug("-----------");
+
+        // for debugging
+        if(time < 0){
+            logger.debug("");
+            logger.debug("NEGATIVE TIME {} CALCULATED", time);
+            exit(2);
+        }
         return new Collision(time, particle.getId(), CollisionType.HORIZONTAL);
     }
 
@@ -452,7 +549,7 @@ public class Simulation {
      */
     private boolean atOpeningHeight(double y0, double time, double velocity) {
         double yf = y0 + velocity * time;
-        return yf >= bottomWallB + ballRadius && yf <= topWallB - ballRadius;
+        return yf >= bottomWallB + ballRadius && yf <= (heightSecondBox == 0.03 ? 0.0585: topWallB - ballRadius);
     }
 
 
@@ -489,6 +586,13 @@ public class Simulation {
         logger.debug("time {}",time);
         logger.debug("COLLISION IS {}", isFalse ? "FALSE" : "TRUE");
         logger.debug("-----------");
+
+        // for debugging
+        if(time < 0){
+            logger.debug("");
+            logger.debug("NEGATIVE TIME {} CALCULATED", time);
+            exit(2);
+        }
 
 
         if (isFalse) {
@@ -545,15 +649,17 @@ public class Simulation {
             }
             writer.printf("%g;", totalTime); // fix with pressure
 
-            for (Particle p : particlesToSave) {
-                writer.printf("%d;", p.getId());
+            for(int i = 2; i < particlesCount + 2; i++){
+                Particle particle = particlesToSave.get(i);
+                writer.printf("%d;", particle.getId());
             }
 
             writer.printf("\n");
 
             // Write particle data
             writer.printf("positionX;positionY;velocityX;velocityY\n");
-            for (Particle particle : particles) {
+            for (int i = 2; i < particlesCount + 2; i++) {
+                Particle particle = particles.get(i);
                 writer.printf("%f;%f;%f;%f%n",
                         particle.getBallPositionX(),
                         particle.getBallPositionY(),
@@ -567,8 +673,20 @@ public class Simulation {
 
     }
 
+    /**
+     * Function that adds two particles with ballRadius = 0 to handle the collision
+     * to the vertex of the opening
+     */
+    private void addVertexParticles(){
+        Particle topVertexParticle = new Particle(0, width, topWallB, 0, 0, 0, Double.POSITIVE_INFINITY);
+        Particle bottomVertexParticle = new Particle(0, width, bottomWallB, 0, 0, 0, Double.POSITIVE_INFINITY);
+        particles.add(topVertexParticle);
+        particles.add(bottomVertexParticle);
+    }
+
     private void initializeSystem() {
-        for (int i = 0; i < particlesCount; i++) {
+        addVertexParticles();
+        for (int i = 2; i < particlesCount + 2; i++) {
             double ballPositionX;
             double ballPositionY;
             boolean overlaps;
