@@ -148,13 +148,16 @@ public class Simulation {
             logger.debug("New X: {} New Y: {} for particle {}", newX, newY, p.getId());
             p.setBallPosition(newX, newY);
             for (Collision c : p.getCollisions()) {
-                c.setTime(c.getTime() - timeSkip);
-                /*if(c.collisionWithWall()){
-                    logger.info("new collision with wall time {} for particle {}", c.getTime(), p.getId());
-                }else{
-                    logger.info("new collision time {} for particle {} against {}", c.getTime(), c.getParticleA(), c.getParticleB());
-                }*/
+                double newTime = c.getTime() - timeSkip;
+                if (newTime < 0 && newTime > -EPS) {
+                    newTime = 0.0;
+                } else if (newTime < -EPS) {
+                    logger.warn("Collision time became significantly negative ({}) for collision {} after advancing. Clamping to +Inf", newTime, c);
+                    newTime = Double.POSITIVE_INFINITY; // o elimina la colisión  // TODO checkear si es mejor eliminarla
+                }
+                c.setTime(newTime);
             }
+
         }
 
         totalTime += timeSkip;
@@ -419,6 +422,11 @@ public class Simulation {
         double dvdv = dvx*dvx + dvy*dvy;              // v·v
         double drdr = dx*dx + dy*dy;                  // r·r
         double sigma = a.getBallRadius() + b.getBallRadius(); // R1+R2 (no asumas 2*ballRadius si pueden diferir)
+        if (drdr <= sigma*sigma + EPS) {
+            // ya están tangentes/solapadas -> choque inmediato
+            return 0.0;
+        }
+
 
         // logger.debug("dx: {}", dx);
         // logger.debug("dy: {}", dy);
@@ -441,21 +449,20 @@ public class Simulation {
         if (d < 0) return Double.POSITIVE_INFINITY;
 
         double sqrtD = Math.sqrt(d);
-
-
-        // TODO:chequear 
-        // logger.debug("Discriminant: {} and sqrtD: {}", d, sqrtD);
         double t1 = (-dvdr - sqrtD) / dvdv;
         double t2 = (-dvdr + sqrtD) / dvdv;
 
+        // Elegir la solución válida en el futuro
         double t = Double.POSITIVE_INFINITY;
-        if (t1 >= 0) t = t1;
-        if (t2 >= 0 && t2 < t) t = t2;
+        if (t1 >= -EPS) t = Math.max(0.0, t1);
+        if (t2 >= -EPS && t2 < t) t = Math.max(0.0, t2);
 
-        logger.debug("Time to collision between particle {} and {}: {}", a.getId(), b.getId(), t);
-
-        // Si ambas negativas, no hay choque futuro
+        // Si ambas raíces claramente negativas -> no choque futuro
+        if (t == Double.POSITIVE_INFINITY) {
+            logger.debug("No future collision between {} and {}", a.getId(), b.getId());
+        }
         return t;
+
     }
 
 
@@ -656,7 +663,10 @@ public class Simulation {
 
             // Write particle data
             writer.printf("positionX;positionY;velocityX;velocityY\n");
-            for (Particle particle : particles) {
+            for (
+                int i = 2; i < particlesCount + 2; i++
+            ) {
+                Particle particle = particles.get(i);
                 writer.printf("%f;%f;%f;%f%n",
                         particle.getBallPositionX(),
                         particle.getBallPositionY(),
