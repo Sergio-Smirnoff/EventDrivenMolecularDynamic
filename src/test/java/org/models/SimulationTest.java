@@ -336,4 +336,15 @@ public class SimulationTest {
         resolveCollision.invoke(sim, vertexCollision);
     }
 
+    @Test
+    void TestTimeToCollisionForVertexParticle() throws InvocationTargetException, IllegalAccessException {
+        Particle particle2 = new Particle(2, 0.08, 0.05, 0.01*Math.cos(Math.PI/4), 0.01*Math.sin(Math.PI/4));
+        Particle topVertexParticle = new Particle(0, 0.09, 0.06, 0, 0, 0, Double.POSITIVE_INFINITY);
+
+        Double time = (Double) timeToCollision.invoke(sim, particle2, topVertexParticle);
+
+        assertTrue(time != Double.POSITIVE_INFINITY);
+
+    }
+
 }

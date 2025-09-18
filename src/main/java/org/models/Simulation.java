@@ -89,10 +89,10 @@ public class Simulation {
             resolveCollision(nextEvent);
 
             // 5. Save the state of the system.
-            if ( nextEvent.getParticleA() >= 0 && nextEvent.getParticleA() < particlesCount ) {
+            if ( nextEvent.getParticleA() >= 0 && nextEvent.getParticleA() < particlesCount + 2 ) {
                 collisionedParticles.add(particles.get(nextEvent.getParticleA()));
             }
-            if ( nextEvent.getParticleB() >= 0 && nextEvent.getParticleB() < particlesCount ) {
+            if ( nextEvent.getParticleB() >= 0 && nextEvent.getParticleB() < particlesCount + 2 ) {
                 collisionedParticles.add(particles.get(nextEvent.getParticleB()));
             }
 
@@ -113,7 +113,8 @@ public class Simulation {
      */
     private Collision findNextEvent() {
         Collision nextEvent = null;
-        for (Particle p : particles) {
+        for (int i = 2; i < particlesCount + 2; i++) {
+            Particle p = particles.get(i);
             if (!p.hasCollisions()) continue;
             Collision earliestForP = p.getNextCollision();
             if (nextEvent == null || earliestForP.getTime() < nextEvent.getTime()) {
@@ -140,8 +141,8 @@ public class Simulation {
         logger.debug("Advancing all particles positions by {} seconds. Total time: {}s", timeSkip, totalTime);
         logger.debug("");
 
-        for (Particle p : particles) {
-
+        for (int i = 2; i < particlesCount + 2; i++) {
+            Particle p = particles.get(i);
             double newX = p.getBallPositionX() + p.getBallVelocityX() * timeSkip;
             double newY = p.getBallPositionY() + p.getBallVelocityY() * timeSkip;
             logger.debug("New X: {} New Y: {} for particle {}", newX, newY, p.getId());
@@ -292,8 +293,19 @@ public class Simulation {
 
             double mi = a.getBallMass();
             double mj = b.getBallMass();
-            double J = (2 / (mi + mj)) * vn;
+            double J;
 
+            if (mi == Double.POSITIVE_INFINITY || mj == Double.POSITIVE_INFINITY) {
+                // Collision with an immovable object (vertex)
+                if (mi == Double.POSITIVE_INFINITY) { // Particle 'a' is the wall
+                    J = (2 * mj) * vn;
+                } else { // Particle 'b' is the wall
+                    J = (2 * mi) * vn;
+                }
+            } else {
+                // Standard two-particle collision
+                J = ((2 * mj * mi) / (mi + mj)) * vn;
+            }
 
             logger.info("previous velocities for colliding particles {} against {}", a.getId(), a.getId());
             logger.info("particle {}: vx {}    vy {}", a.getId(), a.getBallVelocityX(), a.getBallVelocityY());
@@ -302,8 +314,8 @@ public class Simulation {
             // actualizar velocidades: v' = v ± (J/m) * n
             double newVxForA = a.getBallVelocityX() + (J / mi) * nx;
             double newVyForA = a.getBallVelocityY() + (J / mi) * ny;
-            double newVxForB = b.getBallVelocityX() - (J / mi) * nx;
-            double newVyForB = b.getBallVelocityY() - (J / mi) * ny;
+            double newVxForB = b.getBallVelocityX() - (J / mj) * nx;
+            double newVyForB = b.getBallVelocityY() - (J / mj) * ny;
 
             logger.info("new velocities for colliding particles {} against {}", a.getId(), a.getId());
             logger.info("particle {}: vx {}    vy {}", a.getId(), newVxForA, newVyForA);
@@ -338,7 +350,7 @@ public class Simulation {
         }
 
         calculateParticleCollisions(particleA);
-        if (collision.getParticleB() != -1 && collision.getParticleB() < particlesCount) {
+        if (collision.getParticleB() > 1 && collision.getParticleB() < particlesCount + 2) {
             Particle particleB = particles.get(collision.getParticleB());
             calculateParticleCollisions(particleB);
         }
@@ -351,7 +363,8 @@ public class Simulation {
     private void calculateInitialCollisions() {
         logger.debug("");
         logger.debug("Calling Initial Collisions");
-        for (Particle particle : particles) {
+        for (int i = 2; i < particlesCount + 2; i++) {
+            Particle particle = particles.get(i);
             calculateParticleCollisions(particle);
         }
         logger.debug("");
@@ -385,9 +398,11 @@ public class Simulation {
                 double time = timeToCollision(particle, other);
                 if (time != Double.POSITIVE_INFINITY && time >= 0) {
                     Collision collision = new Collision(time, particle.getId(), other.getId(), CollisionType.PARTICLE);
-                    Collision secondColl = new Collision(time, other.getId(), particle.getId(), CollisionType.PARTICLE);
                     particle.addCollision(collision);
-                    other.addCollision(secondColl);
+                    if(other.getId() > 1){
+                        Collision secondColl = new Collision(time, other.getId(), particle.getId(), CollisionType.PARTICLE);
+                        other.addCollision(secondColl);
+                    }
                 }
         }
     }
@@ -655,8 +670,18 @@ public class Simulation {
 
     }
 
+
+    private void addVertexParticles(){
+        Particle topVertexParticle = new Particle(0, width, topWallB, 0, 0, 0, Double.POSITIVE_INFINITY);
+        Particle bottomVertexParticles = new Particle(1, width, bottomWallB, 0, 0, 0, Double.POSITIVE_INFINITY);
+        particles.add(topVertexParticle);
+        particles.add(bottomVertexParticles);
+    }
+
+
     private void initializeSystem() {
-        for (int i = 0; i < particlesCount; i++) {
+        addVertexParticles();
+        for (int i = 2; i < particlesCount + 2; i++) {
             double ballPositionX;
             double ballPositionY;
             boolean overlaps;
