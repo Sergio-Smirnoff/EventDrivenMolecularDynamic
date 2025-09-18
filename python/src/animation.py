@@ -79,6 +79,9 @@ def animate(filename, save_as=None, print_data=False, print_first_k=5):
     print(f"Processing {total_frames} frames...")
     
     for i, (time, event_pid, particles) in enumerate(frames_data):
+        if i >= 15000:
+            break
+            
         frame = np.full((IMG_HEIGHT, IMG_WIDTH, 3), BG_COLOR, dtype=np.uint8)
 
         x_ticks = np.arange(0, 0.18 + 0.001, 0.02)
