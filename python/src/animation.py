@@ -57,15 +57,6 @@ def animate(filename, save_as=None, print_data=False, print_first_k=5):
         (world_to_pixel_vectorized(np.array([p1]))[0], world_to_pixel_vectorized(np.array([p2]))[0])
         for p1, p2 in boundary_lines_world
     ]
-    
-    debug_lines_world = [
-        ((square_size - ball_radius_world, 0), (square_size - ball_radius_world, square_size)),
-        ((square_size + ball_radius_world, 0), (square_size + ball_radius_world, square_size))
-    ]
-    debug_lines_pixels = [
-        (world_to_pixel_vectorized(np.array([p1]))[0], world_to_pixel_vectorized(np.array([p2]))[0])
-        for p1, p2 in debug_lines_world
-    ]
 
     writer = None
     if save_as:
@@ -86,14 +77,14 @@ def animate(filename, save_as=None, print_data=False, print_first_k=5):
             p_world = np.array([[x_val, 0]])
             p_pixel = world_to_pixel_vectorized(p_world)[0]
             cv2.line(frame, (p_pixel[0], p_pixel[1]), (p_pixel[0], p_pixel[1] + 5), AXIS_COLOR, 1, cv2.LINE_AA)
-            cv2.putText(frame, f"{x_val:.2f}", (p_pixel[0] - 10, p_pixel[1] + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, TEXT_COLOR, 1, cv2.LINE_AA)
+            cv2.putText(frame, f"{x_val:.2f}", (p_pixel[0] - 10, p_pixel[1] + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, TEXT_COLOR, 1, cv2.LINE_AA)
 
         y_ticks = np.arange(0, 0.09 + 0.001, 0.01)
         for y_val in y_ticks:
             p_world = np.array([[0, y_val]])
             p_pixel = world_to_pixel_vectorized(p_world)[0]
             cv2.line(frame, (p_pixel[0], p_pixel[1]), (p_pixel[0] - 5, p_pixel[1]), AXIS_COLOR, 1, cv2.LINE_AA)
-            cv2.putText(frame, f"{y_val:.2f}", (p_pixel[0] - 40, p_pixel[1] + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, TEXT_COLOR, 1, cv2.LINE_AA)
+            cv2.putText(frame, f"{y_val:.2f}", (p_pixel[0] - 40, p_pixel[1] + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, TEXT_COLOR, 1, cv2.LINE_AA)
 
         x_label_pos = world_to_pixel_vectorized(np.array([[world_width / 2, 0]]))[0]
         y_label_pos = world_to_pixel_vectorized(np.array([[0, world_height / 2]]))[0]
@@ -103,8 +94,6 @@ def animate(filename, save_as=None, print_data=False, print_first_k=5):
         
         for p1, p2 in boundary_lines_pixels:
             cv2.line(frame, tuple(p1), tuple(p2), BOUNDARY_COLOR, 1, lineType=cv2.LINE_AA)
-        for p1, p2 in debug_lines_pixels:
-            cv2.line(frame, tuple(p1), tuple(p2), (0, 200, 0), 1, lineType=cv2.LINE_AA)
 
         if particles:
             positions = np.array([[p.x, p.y] for p in particles])
