@@ -339,6 +339,7 @@ public class SimulationTest {
         assertEquals(CollisionType.VERTEX, particle.getCollisions().peek().getCollisionType());
     }
 
+    // ?????????????????
     @Test
     void ResolveParticleCollisionVertexType() throws InvocationTargetException, IllegalAccessException {
         Particle particle = new Particle(0, 0.045, 0.045, 0.01*Math.cos(Math.PI/4), 0.01*Math.sin(Math.PI/4));
@@ -357,4 +358,33 @@ public class SimulationTest {
         resolveCollision.invoke(sim, vertexCollision);
     }
 
+    /* --------------------- Calculate Collisions for Particle --------------------- */
+
+    @Test
+    void TestTimeToCollisionForVertexParticle() throws InvocationTargetException, IllegalAccessException {
+        Particle particle2 = new Particle(2, 0.045, 0.045, 0.01*Math.cos(Math.PI/4), 0.01*Math.sin(Math.PI/4));
+        Particle topVertexParticle = new Particle(0, 0.09, 0.06, 0, 0, 0, Double.POSITIVE_INFINITY);
+
+        Double time = (Double) timeToCollision.invoke(sim, particle2, topVertexParticle);
+
+        assertTrue(time != Double.POSITIVE_INFINITY);
+
+    }
+
+    @Test
+    void TestCalculateParticleCollision() throws InvocationTargetException, IllegalAccessException {
+        Particle particle2 = new Particle(2, 0.045, 0.045, 0.01*Math.cos(Math.PI/4), 0.01*Math.sin(Math.PI/4));
+        Particle particle3 = new Particle(3, 0.025, 0.025, -0.01*Math.cos(Math.PI/4), 0.01*Math.sin(Math.PI/4));
+        Particle topVertexParticle = new Particle(0, 0.09, 0.06, 0, 0, 0, Double.POSITIVE_INFINITY);
+        Particle bottomVertexParticle = new Particle(1, 0.09, 0.03, 0, 0, 0, Double.POSITIVE_INFINITY);
+
+        sim.manualAddParticle(topVertexParticle);
+        sim.manualAddParticle(bottomVertexParticle);
+        sim.manualAddParticle(particle2);
+        sim.manualAddParticle(particle3);
+
+        calculateParticleCollisions.invoke(sim, particle2);
+
+        assertEquals(2, particle2.getCollisions().size());
+    }
 }
