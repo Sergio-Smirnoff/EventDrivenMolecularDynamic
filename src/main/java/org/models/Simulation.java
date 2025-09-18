@@ -656,7 +656,8 @@ public class Simulation {
 
             // Write particle data
             writer.printf("positionX;positionY;velocityX;velocityY\n");
-            for (Particle particle : particles) {
+            for (int i = 2; i < particlesCount + 2; i++) {
+                Particle particle = particles.get(i);
                 writer.printf("%f;%f;%f;%f%n",
                         particle.getBallPositionX(),
                         particle.getBallPositionY(),
