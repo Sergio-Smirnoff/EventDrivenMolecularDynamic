@@ -58,6 +58,7 @@ def presiones_vs_t(filename, interval=0.8):
     box_B_width = 0.09
     box_B_height = L
     particle_radius = 0.0015
+    particle_diameter = particle_radius * 2
 
     bottomB = (box_A_size - L) / 2
     topB = (box_A_size + L) / 2
@@ -73,8 +74,13 @@ def presiones_vs_t(filename, interval=0.8):
         "B_right": box_B_height
     }
 
-    total_area_A = wall_lengths["A_left"] + wall_lengths["A_bottom"] + wall_lengths["A_top"] + wall_lengths["A_right_bottom_segment"] + wall_lengths["A_right_top_segment"]
-    total_area_B = sum(wall_lengths[w] for w in ["B_right", "B_top", "B_bottom"])
+
+    reduction_A = sum(wall_lengths[w] * particle_diameter for w in ["A_left", "A_bottom", "A_top", "A_right_bottom_segment", "A_right_top_segment"])
+    reduction_B = sum(wall_lengths[w] * particle_diameter for w in ["B_right", "B_top", "B_bottom"])
+
+    total_area_A = wall_lengths["A_left"] + wall_lengths["A_bottom"] + wall_lengths["A_top"] + wall_lengths["A_right_bottom_segment"] + wall_lengths["A_right_top_segment"] - reduction_A
+    total_area_B = sum(wall_lengths[w] for w in ["B_right", "B_top", "B_bottom"]) - reduction_B
+
 
     tiempos = [0.0]
     tiempos_A = [0.0]
@@ -103,7 +109,7 @@ def presiones_vs_t(filename, interval=0.8):
             current_interval_start += interval
 
         # Decide which wall was collided with
-        if p_id is not None:
+        if p_id is not None and len(p_id) == 1:
             p = particles[p_id[0]]
             if p.x <= box_A_size - particle_radius:
                 if p.x <= 0 + particle_radius:
@@ -145,7 +151,7 @@ def presiones_vs_t(filename, interval=0.8):
         P_A_list.append(P_A)
         P_B_list.append(P_B)
 
-    return tiempos, P_A_list, P_B_list
+    return tiempos[:-2], P_A_list[:-2], P_B_list[:-2]
 
 def plot_presiones_vs_t(filename, interval=0.8):
     tiempos, P_A_list, P_B_list = presiones_vs_t(filename, interval)
@@ -153,6 +159,8 @@ def plot_presiones_vs_t(filename, interval=0.8):
     plt.plot(tiempos, P_B_list, label="Caja B")
     plt.xlabel("Tiempo [s]")
     plt.ylabel("Presión [Pa]")
+    plt.xticks(fontsize=11)
+    plt.yticks(fontsize=11)
     plt.tight_layout()
     plt.legend()
     plt.show()
@@ -160,8 +168,9 @@ def plot_presiones_vs_t(filename, interval=0.8):
     return tiempos, P_A_list, P_B_list
 
 def presion_promedio(P_A_list, P_B_list):
-    pA_mean = np.mean(P_A_list)
-    pB_mean = np.mean(P_B_list)
+    start_index = int(len(P_A_list) * 0.1)
+    pA_mean = np.mean(P_A_list[start_index:])
+    pB_mean = np.mean(P_B_list[start_index:])
 
     return pA_mean, pB_mean
 
@@ -183,10 +192,12 @@ def plot_presion_vs_L(files):
         P_errors.append(P_std_dev) 
     plt.figure(figsize=(10, 6))
     plt.errorbar(L_values, P_means, yerr=P_errors, fmt='o', color='blue',
-                 ecolor='lightblue', capsize=5, label="Presión Promedio")
+                 ecolor='lightblue', capsize=5)
     
     plt.xlabel("Longitud L [m]")
-    plt.ylabel("Presión promedio [Pa]")
+    plt.ylabel("Presión [Pa]")
+    plt.xticks(fontsize=11)
+    plt.yticks(fontsize=11)
     plt.legend()
     plt.tight_layout()
     plt.show()
@@ -195,7 +206,7 @@ def plot_presion_vs_L(files):
 
 
 def presion_vs_area(files):
-    P_means, A_inv, P_errors = [], [], []
+    P_means, A_inv, P_errors, A = [], [], [], []
 
     for fname in files:
         N, L = leer_header(fname)
@@ -216,6 +227,8 @@ def presion_vs_area(files):
         P_means.append(P_mean)
         A_inv.append(1.0 / A_total)
         P_errors.append(P_std_dev) 
+        A.append(A_total)
+
 
     P_means = np.array(P_means)
     A_inv = np.array(A_inv)
@@ -223,10 +236,24 @@ def presion_vs_area(files):
 
     plt.figure(figsize=(10, 6))
     plt.errorbar(A_inv, P_means, yerr=P_errors, fmt='o', color='blue', 
-                 ecolor='lightblue', capsize=5, label="Datos de simulación")
+                 ecolor='lightblue', capsize=5)
     
     plt.xlabel("1/Área [1/m²]")
-    plt.ylabel("Presión promedio [Pa]")
+    plt.ylabel("Presión [Pa]")
+    plt.xticks(fontsize=11)
+    plt.yticks(fontsize=11)
+    plt.tight_layout()
+    plt.legend()
+    plt.show()
+
+    plt.figure(figsize=(10, 6))
+    plt.errorbar(A, P_means, yerr=P_errors, fmt='o', color='blue', 
+                 ecolor='lightblue', capsize=5)
+
+    plt.xlabel("Área [m²]")
+    plt.ylabel("Presión [Pa]")
+    plt.xticks(fontsize=11)
+    plt.yticks(fontsize=11)
     plt.tight_layout()
     plt.legend()
     plt.show()
@@ -243,16 +270,27 @@ def ajuste_presion_vs_area(A_inv, P_means, P_errors):
     P_fit_manual = modelo(A_inv_fit, c_manual)
 
     plt.errorbar(A_inv, P_means, yerr=P_errors, fmt='o', color='blue', 
-                 ecolor='lightblue', capsize=5, label="Datos de simulación")
+                 ecolor='lightblue', capsize=5)
     
     plt.plot(A_inv_fit, P_fit_manual, "--", color='red', 
-             label=f"Ajuste Manual: P = c/A\n$c={c_manual:.3e}$ (RMSE={rmse:.3e})")
+             label=f"Ajuste Manual: P = c/A")
     
     plt.xlabel("1/Área [1/m²]")
     plt.ylabel("Presión promedio [Pa]")
+    plt.xticks(fontsize=11)
+    plt.yticks(fontsize=11)
     plt.tight_layout()
     plt.legend()
     plt.show()
+
+    plot_quadratic_error(
+        x_data=np.array(A_inv),
+        y_data=np.array(P_means),
+        best_fit_param=c_manual,
+        model_func=modelo,
+        param_name="c",
+        title=""
+    )
 
 # Difusión (MSD)
 def difusion(filename):
@@ -260,7 +298,8 @@ def difusion(filename):
     pos0 = np.array([[float(p.x), float(p.y)] for p in frames[0][2]])
 
     msd, tiempos = [], []
-    for t, _, particles in frames:
+
+    for t, _, particles in frames[:]:
         pos = np.array([[float(p.x), float(p.y)] for p in particles])
         disp = pos - pos0
         sq_disp = np.sum(disp**2, axis=1)
@@ -270,21 +309,41 @@ def difusion(filename):
     tiempos = np.array(tiempos)
     msd = np.array(msd)
 
-    D_manual, rmse = manual_diffusion_fit(tiempos, msd)
+    prune = int(len(msd) * 0.2) 
+
+    D_manual, rmse = manual_diffusion_fit(tiempos[:-prune], msd[:-prune])
 
     plt.figure(figsize=(10, 6))
     
-    plt.scatter(tiempos, msd, s=10, alpha=0.7, label="Datos MSD (Simulación)")
-    plt.plot(tiempos, modelo_diff(tiempos, D_manual),
-             color="red", linestyle="--", label=f"Ajuste Manual (D={D_manual:.4e})")
+    plt.scatter(tiempos, msd, s=10, alpha=0.7, label="MSD")
+    plt.plot(tiempos[:-prune], modelo_diff(tiempos[:-prune], D_manual),
+             color="red", linestyle="--", label=f"Ajuste Manual")
     
     plt.xscale('log')
     plt.yscale('log')
     plt.xlabel("Tiempo (s)")
     plt.ylabel("MSD ($m^2$)")
+    plt.xticks(fontsize=11)
+    plt.yticks(fontsize=11)
     plt.legend()
     plt.tight_layout()
     plt.show()
+
+    if len(tiempos) > 0 and tiempos[0] == 0:
+        t_fit = tiempos[1:]
+        msd_fit = msd[1:]
+    else:
+        t_fit = tiempos
+        msd_fit = msd
+
+    plot_quadratic_error(
+        x_data=t_fit[:-prune],
+        y_data=msd_fit[:-prune],
+        best_fit_param=D_manual,
+        model_func=modelo_diff,
+        param_name="D",
+        title=""
+    )
 
 
 if __name__ == "__main__":
@@ -304,3 +363,27 @@ if __name__ == "__main__":
     difusion("./test-data/initial_state_0.05.csv")
     
 
+def plot_quadratic_error(x_data, y_data, best_fit_param, model_func, param_name, title):
+    param_range = np.linspace(best_fit_param * 0.5, best_fit_param * 1.5, 200)
+    
+    sse_values = []
+    for param_val in param_range:
+        y_predicted = model_func(x_data, param_val)
+        sse = np.sum((y_data - y_predicted)**2)
+        sse_values.append(sse)
+        
+    plt.figure(figsize=(8, 5))
+    plt.plot(param_range, sse_values, color='darkorange', linewidth=2)
+    
+    plt.axvline(x=best_fit_param, color='red', linestyle='--', 
+                label=f'Mínimo en {param_name} = {best_fit_param:.3}')
+    
+    plt.xlabel(f"Valores del parámetro '{param_name}'")
+    plt.ylabel("Suma de Errores Cuadráticos (SSE)")
+    plt.xticks(fontsize=11)
+    plt.yticks(fontsize=11)
+    plt.title(title)
+    plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.tight_layout()
+    plt.show()
