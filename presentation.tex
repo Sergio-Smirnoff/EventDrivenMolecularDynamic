@@ -17,7 +17,9 @@
 % Portada
 \begin{frame}
   \titlepage
-  \small Integrantes: MARTINA SCHVARTZ TALLONE, PATRICK LUCA TORLASCHI y SERGIO SMIRNOFF
+  \begin{center}
+      \small INTEGRANTES: MARTINA SCHVARTZ TALLONE, PATRICK LUCA TORLASCHI y SERGIO SMIRNOFF
+  \end{center}
 \end{frame}
 
 % Introducción
@@ -28,11 +30,11 @@
   \vspace{0.5cm}
   \begin{itemize}
     % Descripción del sistema real.
-    \item N particulas en movimiento.
-    \item Cada particula con su movimiento, posicion, radio y masa.
+    \item N partículas rígidas en movimiento.
+    \item Cada partícula con su movimiento, posición, radio y masa.
     \item Viajan sin fuerzas externas.
     \item Colisiones elásticas entre partículas.
-    \item Simulacion de un sistema de eventos.
+    \item Simulación de un sistema de eventos.
   \end{itemize}
   % imagen del sistema de eventos
   \begin{center}
@@ -43,17 +45,17 @@
 \subsection{Modelo Matemático}
 \begin{frame}{Modelo Matemático}
   \begin{itemize}
-    \item Vuelo libre de las N particulas en un espacio 2D:
+    \item Vuelo libre de las N partículas en un espacio 2D:
     \begin{itemize}
       \item $x_i(t) = x_i(0) + v_{x_i} t$
       \item $y_i(t) = y_i(0) + v_{y_i} t$
     \end{itemize}
-    \item Calculo de tiempo de colision contra paredes:
+    \item Cálculo de tiempo de colisión contra paredes:
     \begin{itemize}
       \item $t_{c} = \infty$ si $dv \cdot dr \geqslant 0$,
       \item $t_{c} = \infty$ si $d < 0$, siendo: $d = (dv \cdot dr)^2 - (dv \cdot dv)\cdot(dr \cdot dr - \sigma^2 )$,
       \item $\sigma = r_i + r_j$
-      \item Colision con paredes espejan la velocidad en la normal de colision.
+      \item Colisión con paredes espejan la velocidad en la normal de colisión.
     \end{itemize}
   \end{itemize}
 \end{frame}
@@ -61,7 +63,7 @@
 % Colisiones entre particulas, formulas
 \begin{frame}{Modelo Matemático}
   \begin{itemize}
-    \item Calculo de impulso y velocidades post-colision de particulas:
+    \item Cálculo de impulso y velocidades post-colisión de partículas:
       \begin{itemize}
         \item $J_x = J*dx/\sigma$
         \item $J_y = J*dy/\sigma$
@@ -97,7 +99,7 @@
             \item \texttt{inicialCollisions()} $\rightarrow$ Se calculan las colisiones iniciales.
             \item \texttt{findNextEvent()} $\rightarrow$ Encuentra el próximo evento.
             \item \texttt{advanceTime()} $\rightarrow$ Avanza el tiempo y actualiza las posiciones de las partículas.
-            \item \texttt{processEvent()} $\rightarrow$ Procesa el evento.
+            \item \texttt{resolveCollision()} $\rightarrow$ Procesa el evento.
             }
           \end{itemize}
           \item Clase \texttt{Particle}
@@ -112,15 +114,14 @@
 \begin{frame}{Implementación de vértices}
   % Consultar martina
   \begin{itemize}
-    \item Rime to horizontal wall = time to vertical wall = vertice.
-    \item Se tienen 1 particula en cada vertice.
-    \item Caracteristicas:
+    \item Tiempo a colisión con pared horizontal = tiempo a colisión con pared vertical $\leftarrow$ vértice.
+    \item Se tienen 1 partícula en cada vértice.
+    \item Características:
       \begin{itemize}
         \item Radio = 0.
         \item Masa = $\infty$.
       \end{itemize}
-    \item Espejan las velocidades en el choque a 45°.
-    \item Espejan una de las velocidades en los distintos choques.
+    \item Espejan las velocidades en los distintos choques.
     \item No se mueven.
   \end{itemize}
 \end{frame}
@@ -147,8 +148,8 @@
         \item Número de partículas: 250.
         \item Dimensiones caja A: \textit{0.09} m $\times$ \textit{0.09} m.
         \item Dimensiones caja B: \textit{0.09} m ancho.
-        \item Radio partículas: \textit{0.0015} m.
-        \item Masa partículas: \textit{1} kg.
+        \item Radio de partículas: \textit{0.0015} m.
+        \item Masa de partículas: \textit{1} kg.
         \item Velocidad inicial: \textit{0.01} m/s.
       \end{itemize}
       \vspace{0.2cm}
@@ -164,10 +165,10 @@
   \textbf{Observables}
   \begin{itemize}
     \item Presión en las cajas A y B.
-    \item Calculándolas como la suma de los impúlsos por colisiones contra la pared por unidad de tiempo.
+    \item Calculándolas como la suma de los impulsos por colisiones contra la pared por unidad de tiempo.
     \item Se obtiene con la fórmula: $P = \frac{1}{A} \sum J_i$ siendo A el área de la pared y $J_i$ el impulso de cada colisión.
     \item $J_i = 2 * v_n$ siendo $v_n$ la velocidad de la partícula.
-    \item Coeficiente cuadratico medio: $<z^2> = 2Dt$
+    \item Coeficiente cuadrático medio: $<z^2> = 2Dt$
   \end{itemize}
 \end{frame}
 
@@ -184,11 +185,11 @@
 \begin{frame}{Evolución temporal del observable}
   \begin{columns}
     \begin{column}{0.5\textwidth}
-      \tiny \textit{Presión en función del tiempo para $L = 0.09$ m.}
+      \tiny \textit{Presión en función del tiempo para $L = \textit{0.09}$ m.}
       \includegraphics[width=\linewidth]{photoMaterial/pvt_09.png}
     \end{column}
     \begin{column}{0.5\textwidth}
-      \tiny \textit{Presión en función del tiempo para $L = 0.07$ m.}
+      \tiny \textit{Presión en función del tiempo para $L = \textit{0.07}$ m.}
       \includegraphics[width=\linewidth]{photoMaterial/pvt_07.png}
     \end{column}
     \end{columns}
@@ -199,11 +200,11 @@
 \begin{frame}{Evolución temporal del observable}
   \begin{columns}
     \begin{column}{0.5\textwidth}
-      \scriptsize \textit{Presión en función del tiempo para $L = 0.05$ m.}
+      \scriptsize \textit{Presión en función del tiempo para $L = \textit{0.05}$ m.}
       \includegraphics[width=\linewidth]{photoMaterial/pvt_05.png}
     \end{column}
     \begin{column}{0.5\textwidth}
-      \scriptsize \textit{Presión en función del tiempo para $L = 0.03$ m.}
+      \scriptsize \textit{Presión en función del tiempo para $L = \textit{0.03}$ m.}
       \includegraphics[width=\linewidth]{photoMaterial/pvt_03.png}
     \end{column}
   \end{columns}
@@ -216,11 +217,11 @@
     \begin{column}{0.40\textwidth}
       \scriptsize \text{Input}
       \begin{itemize}
-        \item L = \textit{0.09} m, \textit{0.007} m, \textit{0.05} m, \textit{0.03} m. 
-        \item Velocidad inicial = \textit{0.01} m/s.
-        \item Radio partículas = \textit{0.0015} m.
-        \item Masa partículas = \textit{1} kg.
-        \item Número de partículas = 250.
+        \item $L \in \{ \textit{0.09}, \textit{0.007}, \textit{0.05}, \textit{0.03} \}$ m.
+        \item $v_o$ = \textit{0.01} m/s.
+        \item $r$ = \textit{0.0015} m.
+        \item $m$ = \textit{1} kg.
+        \item $N$ = 250.
       \end{itemize}
     \end{column}
     \begin{column}{0.60\textwidth}
@@ -235,11 +236,11 @@
     \begin{column}{0.40\textwidth}
       \scriptsize \text{Input}
       \begin{itemize}
-        \item L = \textit{0.09} m, \textit{0.007} m, \textit{0.05} m, \textit{0.03} m. 
-        \item Velocidad inicial = \textit{0.01} m/s.
-        \item Radio partículas = \textit{0.0015} m.
-        \item Masa partículas = \textit{1} kg.
-        \item Número de partículas = 250.
+        \item $L \in \{ \textit{0.09}, \textit{0.007}, \textit{0.05}, \textit{0.03} \}$ m.
+        \item $v_o$ = \textit{0.01} m/s.
+        \item $r$ = \textit{0.0015} m.
+        \item $m$ = \textit{1} kg.
+        \item $N$ = 250.
       \end{itemize}
     \end{column}
     \begin{column}{0.60\textwidth}
@@ -251,7 +252,7 @@
 
 \subsection{Segundo estudio: Coeficiente de difusión}
 \begin{frame}{Coeficiente de difusión}
-  \tiny \text{Input:} L = \textit{0.09} m -- Velocidad inicial = \textit{0.01} m/s -- Radio partículas = \textit{0.0015} m -- Masa partículas = \textit{1} kg -- Número de partículas = 250.
+  \tiny \text{Input:} $L$ = \textit{0.09} m -- $v_o$ = \textit{0.01} m/s -- $r$ = \textit{0.0015} m -- $m$ = \textit{1} kg -- $N$ = 250.
   \begin{columns}
     \begin{column}{0.50\textwidth}
       \includegraphics[width=1.10\linewidth]{photoMaterial/MSD_09.png}
@@ -268,8 +269,8 @@
 \begin{frame}{Conclusiones}
   \textbf{Primer estudio: Presión vs $A^{-1}$}
   \begin{itemize}
-    \item Cuanta mayor area, menor es la presión.
-    \item Luego de 10 segundos, todas las presiones entran en un régimen estacionario.
+    \item Cuanta mayor área, menor es la presión.
+    \item Luego de 20 segundos, todas las presiones entran en un régimen estacionario.
     \item NO se cumple la ley de los gases ideales ya que P no es cte.
   \end{itemize}
   \textbf{Segundo estudio: Coeficiente de difusión}
