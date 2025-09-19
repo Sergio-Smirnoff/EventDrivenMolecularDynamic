@@ -151,12 +151,13 @@ def presiones_vs_t(filename, interval=0.8):
         P_A_list.append(P_A)
         P_B_list.append(P_B)
 
-    return tiempos[:-2], P_A_list[:-2], P_B_list[:-2]
+    return tiempos[:-2], P_A_list[:-2], P_B_list[:-2], total_area_A, total_area_B
 
 def plot_presiones_vs_t(filename, interval=0.8):
-    tiempos, P_A_list, P_B_list = presiones_vs_t(filename, interval)
+    tiempos, P_A_list, P_B_list, _, _ = presiones_vs_t(filename, interval)
     plt.plot(tiempos, P_A_list, label="Caja A")
     plt.plot(tiempos, P_B_list, label="Caja B")
+    plt.grid()
     plt.xlabel("Tiempo [s]")
     plt.ylabel("Presión [Pa]")
     plt.xticks(fontsize=11)
@@ -168,7 +169,7 @@ def plot_presiones_vs_t(filename, interval=0.8):
     return tiempos, P_A_list, P_B_list
 
 def presion_promedio(P_A_list, P_B_list):
-    start_index = int(len(P_A_list) * 0.1)
+    start_index = int(len(P_A_list) * 0.9)
     pA_mean = np.mean(P_A_list[start_index:])
     pB_mean = np.mean(P_B_list[start_index:])
 
@@ -179,7 +180,7 @@ def plot_presion_vs_L(files):
 
     for fname in files:
         N, L = leer_header(fname)
-        tiempos, P_A_list, P_B_list = presiones_vs_t(fname)
+        tiempos, P_A_list, P_B_list, _, _ = presiones_vs_t(fname)
 
         pA_mean, pB_mean = presion_promedio(P_A_list, P_B_list)
 
@@ -198,6 +199,7 @@ def plot_presion_vs_L(files):
     plt.ylabel("Presión [Pa]")
     plt.xticks(fontsize=11)
     plt.yticks(fontsize=11)
+    plt.grid()
     plt.legend()
     plt.tight_layout()
     plt.show()
@@ -206,12 +208,12 @@ def plot_presion_vs_L(files):
 
 
 def presion_vs_area(files):
-    P_means, A_inv, P_errors, A = [], [], [], []
+    P_means, A_inv, P_errors, A, Ls = [], [], [], [], []
 
     for fname in files:
         N, L = leer_header(fname)
         
-        tiempos, P_A_list, P_B_list = presiones_vs_t(fname)
+        tiempos, P_A_list, P_B_list, _, _ = presiones_vs_t(fname)
 
         pA_mean, pB_mean = presion_promedio(P_A_list, P_B_list)
         
@@ -224,6 +226,7 @@ def presion_vs_area(files):
         
         P_mean = 0.5 * (pA_mean + pB_mean)
         
+        Ls.append(L)
         P_means.append(P_mean)
         A_inv.append(1.0 / A_total)
         P_errors.append(P_std_dev) 
@@ -243,18 +246,22 @@ def presion_vs_area(files):
     plt.xticks(fontsize=11)
     plt.yticks(fontsize=11)
     plt.tight_layout()
+    plt.grid()
     plt.legend()
     plt.show()
 
-    plt.figure(figsize=(10, 6))
-    plt.errorbar(A, P_means, yerr=P_errors, fmt='o', color='blue', 
-                 ecolor='lightblue', capsize=5)
+    P_A = [P_ * A_ for P_, A_ in zip(P_means, A)]
 
-    plt.xlabel("Área [m²]")
-    plt.ylabel("Presión [Pa]")
+    plt.figure(figsize=(10, 6))
+    plt.scatter( Ls, P_A, color='blue', marker='o')
+
+
+    plt.xlabel("L [m]")
+    plt.ylabel("Presión x Area [Pa m²]")
     plt.xticks(fontsize=11)
     plt.yticks(fontsize=11)
     plt.tight_layout()
+    plt.grid()
     plt.legend()
     plt.show()
 
@@ -281,6 +288,7 @@ def ajuste_presion_vs_area(A_inv, P_means, P_errors):
     plt.yticks(fontsize=11)
     plt.tight_layout()
     plt.legend()
+    plt.grid()
     plt.show()
 
     plot_quadratic_error(
@@ -309,23 +317,20 @@ def difusion(filename):
     tiempos = np.array(tiempos)
     msd = np.array(msd)
 
-    prune = int(len(msd) * 0.2) 
-
-    D_manual, rmse = manual_diffusion_fit(tiempos[:-prune], msd[:-prune])
+    D_manual, rmse = manual_diffusion_fit(tiempos, msd)
 
     plt.figure(figsize=(10, 6))
     
     plt.scatter(tiempos, msd, s=10, alpha=0.7, label="MSD")
-    plt.plot(tiempos[:-prune], modelo_diff(tiempos[:-prune], D_manual),
+    plt.plot(tiempos, modelo_diff(tiempos, D_manual),
              color="red", linestyle="--", label=f"Ajuste Manual")
     
-    plt.xscale('log')
-    plt.yscale('log')
     plt.xlabel("Tiempo (s)")
     plt.ylabel("MSD ($m^2$)")
     plt.xticks(fontsize=11)
     plt.yticks(fontsize=11)
     plt.legend()
+    plt.grid()
     plt.tight_layout()
     plt.show()
 
@@ -337,8 +342,8 @@ def difusion(filename):
         msd_fit = msd
 
     plot_quadratic_error(
-        x_data=t_fit[:-prune],
-        y_data=msd_fit[:-prune],
+        x_data=t_fit,
+        y_data=msd_fit,
         best_fit_param=D_manual,
         model_func=modelo_diff,
         param_name="D",
@@ -377,6 +382,10 @@ def plot_quadratic_error(x_data, y_data, best_fit_param, model_func, param_name,
     
     plt.axvline(x=best_fit_param, color='red', linestyle='--', 
                 label=f'Mínimo en {param_name} = {best_fit_param:.3}')
+    
+    min_sse = min(sse_values)
+    plt.axhline(y=min_sse, color='blue', linestyle='--', 
+                label=f'Mínimo SSE = {min_sse:.3}')
     
     plt.xlabel(f"Valores del parámetro '{param_name}'")
     plt.ylabel("Suma de Errores Cuadráticos (SSE)")
