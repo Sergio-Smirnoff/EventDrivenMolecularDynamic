@@ -1,7 +1,6 @@
 \documentclass{beamer}
 \usetheme{Warsaw}
 \usepackage{graphicx}
-\usepackage{animate}
 \useoutertheme{miniframes}
 
 % Datos
@@ -114,7 +113,6 @@
 
 
 \begin{frame}{Implementación de vértices}
-  % Consultar martina
   \begin{itemize}
     \item Tiempo a colisión con pared horizontal = tiempo a colisión con pared vertical $\leftarrow$ vértice.
     \item Se tienen 1 partícula en cada vértice.
@@ -176,30 +174,32 @@
 
 % Resultados
 \section{Resultados}
-\subsection{Animaciones}
- \begin{frame}{Animaciones}
+\begin{frame}{Animaciones}
   \begin{columns}
     \begin{column}{0.5\textwidth}
-      \tiny \textit{Simulación con $L = \textit{0.09}$ m.}
-      \animategraphics[autoplay,loop,controls,width=0.7\linewidth]{12}{./photoMaterial/09/frame}{0001}{1603}
+      \tiny \textit{Animacion para $L = 0.09$ m.}
+      \includegraphics[width=1.10\linewidth]{photoMaterial/frame_09.png}
     \end{column}
     \begin{column}{0.5\textwidth}
-      \tiny \textit{Simulación con $L = \textit{0.03}$ m.}
-      \includemedia{addresource = photoMaterial/animation_03.mp4}
+      \tiny \textit{Animacion para $L = 0.03$ m.}
+      \includegraphics[width=1.10\linewidth]{photoMaterial/frame_03.png}
     \end{column}
-  \end{columns}
-  \footnotesize Link a todas las simulaciones: \url{https://drive.google.com/drive/u/0/folders/15U5c1PUR8tJ0o8anSrR5IVTqSokGh94G}
+    \end{columns}
+    \vspace{0.5cm}
+    \begin{center}
+    \footnotesize \href{https://drive.google.com/drive/u/0/folders/14M54Yl1cVpbTKp7pH25z3RIUNWCZJkpW}{\textbf{Ver las animaciones.}}
+    \end{center}
 \end{frame}
 
 \begin{frame}{Evolución temporal del observable}
   \begin{columns}
     \begin{column}{0.5\textwidth}
       \tiny \textit{Presión en función del tiempo para $L = \textit{0.09}$ m.}
-      \includegraphics[width=\linewidth]{photoMaterial/pvt_09.png}
+      \includegraphics[width=\linewidth]{photoMaterial/PvT_09.png}
     \end{column}
     \begin{column}{0.5\textwidth}
       \tiny \textit{Presión en función del tiempo para $L = \textit{0.07}$ m.}
-      \includegraphics[width=\linewidth]{photoMaterial/pvt_07.png}
+      \includegraphics[width=\linewidth]{photoMaterial/PvT_07.png}
     \end{column}
     \end{columns}
     \tiny Podemos tomar estacionario a partir de los 20 segundos.
@@ -210,51 +210,39 @@
   \begin{columns}
     \begin{column}{0.5\textwidth}
       \scriptsize \textit{Presión en función del tiempo para $L = \textit{0.05}$ m.}
-      \includegraphics[width=\linewidth]{photoMaterial/pvt_05.png}
+      \includegraphics[width=\linewidth]{photoMaterial/PvT_05.png}
     \end{column}
     \begin{column}{0.5\textwidth}
       \scriptsize \textit{Presión en función del tiempo para $L = \textit{0.03}$ m.}
-      \includegraphics[width=\linewidth]{photoMaterial/pvt_03.png}
+      \includegraphics[width=\linewidth]{photoMaterial/PvT_03.png}
     \end{column}
   \end{columns}
   \tiny Podemos tomar estacionario a partir de los 20 segundos.
   \tiny Con: N = \textit{250}, r = \textit{0.0015} m, m = \textit{1} kg.
 \end{frame}
 
-\begin{frame}{Primer estudio: Presión vs $A^{-1}$}
+\begin{frame}{Primer estudio: Presión vs L}
   \begin{columns}
     \begin{column}{0.40\textwidth}
       \scriptsize \text{Input}
       \begin{itemize}
         \item $L \in \{ \textit{0.09}, \textit{0.007}, \textit{0.05}, \textit{0.03} \}$ m.
-        \item $v_o$ = \textit{0.01} m/s.
-        \item $r$ = \textit{0.0015} m.
-        \item $m$ = \textit{1} kg.
-        \item $N$ = 250.
       \end{itemize}
     \end{column}
     \begin{column}{0.60\textwidth}
-      \includegraphics[width=1\linewidth]{photoMaterial/Presion_vs_area.png} % meter el de area real
-      \includegraphics[width=1\linewidth]{photoMaterial/Presion_vs_L.png}
+      \includegraphics[width=1\linewidth]{photoMaterial/PvL.png}
     \end{column}
   \end{columns}
 \end{frame}
 
 \begin{frame}{Primer estudio: Presión vs $A^{-1}$}
+  \small $L \in \{ \textit{0.09}, \textit{0.007}, \textit{0.05}, \textit{0.03} \}$ m.
   \begin{columns}
-    \begin{column}{0.40\textwidth}
-      \scriptsize \text{Input}
-      \begin{itemize}
-        \item $L \in \{ \textit{0.09}, \textit{0.007}, \textit{0.05}, \textit{0.03} \}$ m.
-        \item $v_o$ = \textit{0.01} m/s.
-        \item $r$ = \textit{0.0015} m.
-        \item $m$ = \textit{1} kg.
-        \item $N$ = 250.
-      \end{itemize}
+    \begin{column}{0.50\textwidth}
+      \includegraphics[width=1.10\linewidth]{photoMaterial/Pv1__A_Ajuste.png}
     \end{column}
-    \begin{column}{0.60\textwidth}
-      %\includegraphics[width=0.75\linewidth]{photoMaterial/Presion_vs_area.png} ver si meterlo o no
-      \includegraphics[width=1\linewidth]{photoMaterial/Presion_vs_area_ajuste.png}
+    \begin{column}{0.50\textwidth}
+      \includegraphics[width=1.10\linewidth]{photoMaterial/CPv1_A.png}
     \end{column}
   \end{columns}
 \end{frame}
@@ -267,8 +255,7 @@
       \includegraphics[width=1.10\linewidth]{photoMaterial/MSD_09.png}
     \end{column}
     \begin{column}{0.50\textwidth}
-      %\includegraphics[width=0.75\linewidth]{photoMaterial/Presion_vs_area.png} ver si meterlo o no
-      \includegraphics[width=1.10\linewidth]{photoMaterial/MSD_03.png}
+      \includegraphics[width=1.10\linewidth]{photoMaterial/CMSD09.png}
     \end{column}
   \end{columns}
 \end{frame}
@@ -284,7 +271,7 @@
   \end{itemize}
   \textbf{Segundo estudio: Coeficiente de difusión}
   \begin{itemize}
-    \item Falta este análisis.
+    \item Crece rapidamente al inicio y luego se estabiliza.
   \end{itemize}
 \end{frame}
 
