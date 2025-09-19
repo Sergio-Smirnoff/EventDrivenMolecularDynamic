@@ -3,6 +3,7 @@ package org.models;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import static java.lang.System.exit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -10,8 +11,6 @@ import java.util.PriorityQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static java.lang.System.exit;
 
 
 public class Simulation {
@@ -267,7 +266,7 @@ public class Simulation {
         } else if (w.equals(CollisionType.HORIZONTAL)) {
             p.setBallVelocity(vx, -vy);
         }else{
-            // depende como venga la partícula hacia el vértice
+            // depende como venga la partícula hacia el vértice ?
             p.setBallVelocity(-p.getBallVelocityX(), -p.getBallVelocityY());
         }
     }
@@ -307,24 +306,21 @@ public class Simulation {
                 J = ((2 * mj * mi) / (mi + mj)) * vn;
             }
 
-            logger.info("previous velocities for colliding particles {} against {}", a.getId(), b.getId());
+            logger.info("previous velocities for colliding particles {} against {}", a.getId(), a.getId());
             logger.info("particle {}: vx {}    vy {}", a.getId(), a.getBallVelocityX(), a.getBallVelocityY());
             logger.info("particle {}: vx {}    vy {}", b.getId(), b.getBallVelocityX(), b.getBallVelocityY());
 
             // actualizar velocidades: v' = v ± (J/m) * n
             double newVxForA = a.getBallVelocityX() + (J / mi) * nx;
             double newVyForA = a.getBallVelocityY() + (J / mi) * ny;
+            double newVxForB = b.getBallVelocityX() - (J / mj) * nx;
+            double newVyForB = b.getBallVelocityY() - (J / mj) * ny;
 
-            a.setBallVelocity( newVxForA, newVyForA);
-
-            logger.info("new velocities for colliding particles {} against {}", a.getId(), b.getId());
+            logger.info("new velocities for colliding particles {} against {}", a.getId(), a.getId());
             logger.info("particle {}: vx {}    vy {}", a.getId(), newVxForA, newVyForA);
-            if(b.getId() > 1){
-                double newVxForB = b.getBallVelocityX() - (J / mi) * nx;
-                double newVyForB = b.getBallVelocityY() - (J / mi) * ny;
-                logger.info("particle {}: vx {}    vy {}", b.getId(), newVxForB, newVyForB);
-                b.setBallVelocity(newVxForB, newVyForB);
-            }
+            logger.info("particle {}: vx {}    vy {}", b.getId(), newVxForB, newVyForB);
+            a.setBallVelocity( newVxForA, newVyForA);
+            b.setBallVelocity(newVxForB, newVyForB);
 
             logger.info("Colliding particle {} with particle {}", a.getId(), b.getId());
         }
@@ -651,9 +647,8 @@ public class Simulation {
             }
             writer.printf("%g;", totalTime); // fix with pressure
 
-            for(int i = 2; i < particlesCount + 2; i++){
-                Particle particle = particlesToSave.get(i);
-                writer.printf("%d;", particle.getId());
+            for (Particle p : particlesToSave) {
+                writer.printf("%d;", p.getId());
             }
 
             writer.printf("\n");
