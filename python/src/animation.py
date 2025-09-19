@@ -70,6 +70,9 @@ def animate(filename, save_as=None, print_data=False, print_first_k=5):
     print(f"Processing {total_frames} frames...")
     
     for i, (time, event_pid, particles) in enumerate(frames_data):
+        if i % 10 != 0:
+            continue
+
         frame = np.full((IMG_HEIGHT, IMG_WIDTH, 3), BG_COLOR, dtype=np.uint8)
 
         x_ticks = np.arange(0, 0.18 + 0.001, 0.02)
@@ -100,7 +103,7 @@ def animate(filename, save_as=None, print_data=False, print_first_k=5):
             particle_ids = np.array([p.id for p in particles])
             pixel_coords = world_to_pixel_vectorized(positions)
             is_event = np.isin(particle_ids, event_pid if event_pid else [])
-            colors = np.where(is_event[:, np.newaxis], EVENT_COLOR, PARTICLE_COLOR)
+            colors = np.where(is_event[:, np.newaxis], PARTICLE_COLOR, PARTICLE_COLOR)
             for center_px, color in zip(pixel_coords, colors):
                 cv2.circle(frame, tuple(center_px), ball_radius_pixels, PARTICLE_BORDER, -1, lineType=cv2.LINE_AA)
                 cv2.circle(frame, tuple(center_px), ball_radius_pixels - 1, tuple(color.tolist()), -1, lineType=cv2.LINE_AA)

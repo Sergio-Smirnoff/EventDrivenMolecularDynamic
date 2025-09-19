@@ -357,4 +357,64 @@ public class SimulationTest {
         resolveCollision.invoke(sim, vertexCollision);
     }
 
+    @Test
+    void TestTimeToCollisionForVertexParticle() throws InvocationTargetException, IllegalAccessException {
+        Particle particle2 = new Particle(2, 0.08, 0.05, 0.01*Math.cos(Math.PI/4), 0.01*Math.sin(Math.PI/4));
+        Particle topVertexParticle = new Particle(0, 0.09, 0.06, 0, 0, 0, Double.POSITIVE_INFINITY);
+
+        Double time = (Double) timeToCollision.invoke(sim, particle2, topVertexParticle);
+
+        assertTrue(time != Double.POSITIVE_INFINITY);
+
+    }
+
+    @Test
+    void TestCalculateParticleCollisionsIncludingTopVertex() throws InvocationTargetException, IllegalAccessException {
+        Particle particle2 = new Particle(2, 0.08, 0.05, 0.01*Math.cos(Math.PI/4), 0.01*Math.sin(Math.PI/4));
+        Particle topVertexParticle = new Particle(0, 0.09, 0.06, 0, 0, 0, Double.POSITIVE_INFINITY);
+        Particle bottomVertexParticle = new Particle(1, 0.09, 0.03, 0, 0, 0, Double.POSITIVE_INFINITY);
+
+        sim.manualAddParticle(topVertexParticle);
+        sim.manualAddParticle(bottomVertexParticle);
+        sim.manualAddParticle(particle2);
+
+        calculateParticleCollisions.invoke(sim, particle2);
+
+        assertEquals(3, particle2.getCollisions().size());
+
+    }
+
+    @Test
+    void TestCalculateParticleCollisionsForTangentialVertexCollision() throws InvocationTargetException, IllegalAccessException {
+        // Given: a simulation with a vertex particle and a test particle on a tangential path.
+        // The top-right vertex particle (id=0) is at (0.09, 0.06).
+        Particle bottomVertexParticle = new Particle(1, 0.09, 0.03, 0, 0, 0, Double.POSITIVE_INFINITY);
+
+        // The test particle is set up to have a glancing collision.
+        // Its path will just 'kiss' the vertex particle's outer edge.
+        Particle testParticle = new Particle(3, 0.0930, 0.0330, -0.01, -0.01);
+
+        // Add the particles to the simulation.
+        sim.manualAddParticle(bottomVertexParticle);
+        sim.manualAddParticle(testParticle);
+
+        // When: we calculate collisions for the test particle.
+        calculateParticleCollisions.invoke(sim, testParticle);
+
+        // Then: we expect a single collision of type PARTICLE with the vertex.
+        // The collision time should be close to 10 seconds.
+        assertFalse(testParticle.getCollisions().isEmpty(), "Particle should have collisions after calculation.");
+
+        Collision nextCollision = testParticle.getCollisions().peek();
+        assertNotNull(nextCollision, "Next collision should not be null.");
+        assertEquals(CollisionType.PARTICLE, nextCollision.getCollisionType(), "Collision type should be PARTICLE.");
+
+        assertEquals(0, nextCollision.getParticleB(), "Collision should be with the vertex particle (ID 0).");
+
+        // The collision time should be approximately the time to reach the vertex.
+        assertEquals(10.0, nextCollision.getTime(), 1e-5, "Collision time should be correct for a tangential hit.");
+    }
+
+    // chequear como después hace el handle y todo el resto de funciones que vienen después
+
 }

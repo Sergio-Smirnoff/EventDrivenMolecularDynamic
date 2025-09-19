@@ -89,10 +89,10 @@ public class Simulation {
             resolveCollision(nextEvent);
 
             // 5. Save the state of the system.
-            if ( nextEvent.getParticleA() >= 0 && nextEvent.getParticleA() < particlesCount ) {
+            if ( nextEvent.getParticleA() >= 0 && nextEvent.getParticleA() < particlesCount + 2 ) {
                 collisionedParticles.add(particles.get(nextEvent.getParticleA()));
             }
-            if ( nextEvent.getParticleB() >= 0 && nextEvent.getParticleB() < particlesCount ) {
+            if ( nextEvent.getParticleB() >= 0 && nextEvent.getParticleB() < particlesCount + 2 ) {
                 collisionedParticles.add(particles.get(nextEvent.getParticleB()));
             }
 
@@ -113,7 +113,8 @@ public class Simulation {
      */
     private Collision findNextEvent() {
         Collision nextEvent = null;
-        for (Particle p : particles) {
+        for (int i = 2; i < particlesCount + 2; i++) {
+            Particle p = particles.get(i);
             if (!p.hasCollisions()) continue;
             Collision earliestForP = p.getNextCollision();
             if (nextEvent == null || earliestForP.getTime() < nextEvent.getTime()) {
@@ -294,7 +295,6 @@ public class Simulation {
             double mj = b.getBallMass();
             double J;
 
-            // la partícula b debería ser siempre el vértice
             if (mi == Double.POSITIVE_INFINITY || mj == Double.POSITIVE_INFINITY) {
                 // Collision with an immovable object (vertex)
                 if (mi == Double.POSITIVE_INFINITY) { // Particle 'a' is the wall
@@ -307,7 +307,6 @@ public class Simulation {
                 J = ((2 * mj * mi) / (mi + mj)) * vn;
             }
 
-
             logger.info("previous velocities for colliding particles {} against {}", a.getId(), b.getId());
             logger.info("particle {}: vx {}    vy {}", a.getId(), a.getBallVelocityX(), a.getBallVelocityY());
             logger.info("particle {}: vx {}    vy {}", b.getId(), b.getBallVelocityX(), b.getBallVelocityY());
@@ -315,6 +314,7 @@ public class Simulation {
             // actualizar velocidades: v' = v ± (J/m) * n
             double newVxForA = a.getBallVelocityX() + (J / mi) * nx;
             double newVyForA = a.getBallVelocityY() + (J / mi) * ny;
+
             a.setBallVelocity( newVxForA, newVyForA);
 
             logger.info("new velocities for colliding particles {} against {}", a.getId(), b.getId());
@@ -353,7 +353,7 @@ public class Simulation {
         }
 
         calculateParticleCollisions(particleA);
-        if (collision.getParticleB() > 1 && collision.getParticleB() < particlesCount) {
+        if (collision.getParticleB() > 1 && collision.getParticleB() < particlesCount + 2) {
             Particle particleB = particles.get(collision.getParticleB());
             calculateParticleCollisions(particleB);
         }
@@ -401,9 +401,11 @@ public class Simulation {
                 double time = timeToCollision(particle, other);
                 if (time != Double.POSITIVE_INFINITY && time >= 0) {
                     Collision collision = new Collision(time, particle.getId(), other.getId(), CollisionType.PARTICLE);
-                    Collision secondColl = new Collision(time, other.getId(), particle.getId(), CollisionType.PARTICLE);
                     particle.addCollision(collision);
-                    other.addCollision(secondColl);
+                    if(other.getId() > 1){
+                        Collision secondColl = new Collision(time, other.getId(), particle.getId(), CollisionType.PARTICLE);
+                        other.addCollision(secondColl);
+                    }
                 }
         }
     }
@@ -673,16 +675,14 @@ public class Simulation {
 
     }
 
-    /**
-     * Function that adds two particles with ballRadius = 0 to handle the collision
-     * to the vertex of the opening
-     */
+
     private void addVertexParticles(){
         Particle topVertexParticle = new Particle(0, width, topWallB, 0, 0, 0, Double.POSITIVE_INFINITY);
-        Particle bottomVertexParticle = new Particle(0, width, bottomWallB, 0, 0, 0, Double.POSITIVE_INFINITY);
+        Particle bottomVertexParticles = new Particle(1, width, bottomWallB, 0, 0, 0, Double.POSITIVE_INFINITY);
         particles.add(topVertexParticle);
-        particles.add(bottomVertexParticle);
+        particles.add(bottomVertexParticles);
     }
+
 
     private void initializeSystem() {
         addVertexParticles();
