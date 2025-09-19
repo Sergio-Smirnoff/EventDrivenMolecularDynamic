@@ -1,6 +1,7 @@
 \documentclass{beamer}
 \usetheme{Warsaw}
 \usepackage{graphicx}
+\usepackage{animate}
 \useoutertheme{miniframes}
 
 % Datos
@@ -50,10 +51,11 @@
       \item $x_i(t) = x_i(0) + v_{x_i} t$
       \item $y_i(t) = y_i(0) + v_{y_i} t$
     \end{itemize}
-    \item Cálculo de tiempo de colisión contra paredes:
+    \item Cálculo de tiempo de colisión contra particulas:
     \begin{itemize}
       \item $t_{c} = \infty$ si $dv \cdot dr \geqslant 0$,
       \item $t_{c} = \infty$ si $d < 0$, siendo: $d = (dv \cdot dr)^2 - (dv \cdot dv)\cdot(dr \cdot dr - \sigma^2 )$,
+      \item $t_{c} = -\dfrac{(dv \cdot dr) + \sqrt{d}}{dv \cdot dv}$
       \item $\sigma = r_i + r_j$
       \item Colisión con paredes espejan la velocidad en la normal de colisión.
     \end{itemize}
@@ -83,7 +85,7 @@
     \begin{column}{0.4\textwidth}
       {\scriptsize
         \begin{center}
-          \includegraphics[width=0.9\linewidth]{photoMaterial/uml.png}
+          \includegraphics[width=0.9\linewidth]{photoMaterial/uml.jpg}
         \end{center}
       }
     \end{column}
@@ -120,14 +122,14 @@
       \begin{itemize}
         \item Radio = 0.
         \item Masa = $\infty$.
+        \item No se mueven.
       \end{itemize}
     \item Espejan las velocidades en los distintos choques.
-    \item No se mueven.
   \end{itemize}
 \end{frame}
 
 % Simulaciones
-
+\section{Simulaciones}
 \begin{frame}{Geometría del sistema y parámetros de simulación}
   \scriptsize
   \begin{columns}
@@ -168,18 +170,25 @@
     \item Calculándolas como la suma de los impulsos por colisiones contra la pared por unidad de tiempo.
     \item Se obtiene con la fórmula: $P = \frac{1}{A} \sum J_i$ siendo A el área de la pared y $J_i$ el impulso de cada colisión.
     \item $J_i = 2 * v_n$ siendo $v_n$ la velocidad de la partícula.
-    \item Coeficiente cuadrático medio: $<z^2> = 2Dt$
+    \item Coeficiente cuadrático medio: $<z^2> = 4Dt$
   \end{itemize}
 \end{frame}
 
 % Resultados
 \section{Resultados}
 \subsection{Animaciones}
-\begin{frame}{Animaciones}
-  % Aquí va la imagen de un frame representativo
-  \includegraphics[width=0.7\linewidth]{ejemplo.png}
-  \vspace{0.3cm}
-  \footnotesize Link al video: \url{https://youtube.com/...}
+ \begin{frame}{Animaciones}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \tiny \textit{Simulación con $L = \textit{0.09}$ m.}
+      \animategraphics[autoplay,loop,controls,width=0.7\linewidth]{12}{./photoMaterial/09/frame}{0001}{1603}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \tiny \textit{Simulación con $L = \textit{0.03}$ m.}
+      \includemedia{addresource = photoMaterial/animation_03.mp4}
+    \end{column}
+  \end{columns}
+  \footnotesize Link a todas las simulaciones: \url{https://drive.google.com/drive/u/0/folders/15U5c1PUR8tJ0o8anSrR5IVTqSokGh94G}
 \end{frame}
 
 \begin{frame}{Evolución temporal del observable}
